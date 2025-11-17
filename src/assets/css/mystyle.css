@@ -1,0 +1,110 @@
+/* 美容生技產業配色變數 - 深紫藍系（科技+優雅+專業） */
+:root {
+    --daycare-primary: #512DA8;        /* 深紫藍 - 主色調（生技科技感） */
+    --daycare-secondary: #7B1FA2;      /* 深紫 - 次色調（美容優雅） */
+    --daycare-accent: #B39DDB;         /* 淺紫 - 強調色（柔和美感） */
+    --daycare-button: #5E35B1;         /* 紫藍 - 按鈕色（專業穩重） */
+    --daycare-divider: rgba(81, 45, 168, 0.3);
+    --daycare-divider-light: rgba(81, 45, 168, 0.2);
+    --daycare-shadow: rgba(81, 45, 168, 0.15);
+    --daycare-shadow-light: rgba(81, 45, 168, 0.1);
+    --daycare-btn-hover-shadow: rgba(94, 53, 177, 0.4);
+}
+
+.tableImage {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    background: url('@/assets/img/background.png');
+    /* background: url('../img/banner.jpg'); */
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+}
+
+.myTransparent {
+    background: rgba(243, 229, 245, 0.85);
+}
+
+.navBarTransparent{
+    background: rgba(225, 190, 231, 0.9);
+}
+
+.justTransparent{
+    background: rgba(81, 45, 168, 0.65);
+}
+
+.mushroomColor{
+    background-color: #512DA8;
+}
+.elephantColor{
+    background-color: #B39DDB;
+}
+.thatchColor{
+    background-color: #E1BEE7;
+}
+.gunmetalColor{
+    background-color: #7B1FA2;
+}
+
+.titleFontColor{
+    color: #FFFFFF;
+    text-shadow: 2px 2px 3px rgba(81, 45, 168, 0.5);
+}
+.contentfontColor{
+    color: #512DA8;
+}
+
+.mushroomFontColor{
+    color: #512DA8;
+}
+
+.gap-20{
+    gap: 20px;
+}
+
+.swal2-cancel,.swal2-confirm{
+    color:white;
+}
+
+.v-selection-control__input{
+    color:blue;
+}
+
+/* 登入頁面專用顏色 - 使用CSS變數 */
+.loginTitleColor {
+    color: var(--daycare-primary);
+}
+
+.loginSubtitleColor {
+    color: var(--daycare-secondary);
+}
+
+.loginInputColor {
+    color: var(--daycare-accent);
+}
+
+.loginBtnColor {
+    background-color: var(--daycare-button);
+}
+
+.loginDividerColor {
+    border-color: var(--daycare-divider);
+}
+
+.loginDividerLightColor {
+    border-color: var(--daycare-divider-light);
+}
+
+.loginCardBg {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 10px 40px 0 var(--daycare-shadow),
+                0 2px 8px 0 var(--daycare-shadow-light);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--daycare-divider-light);
+}
+
+.loginBtnHoverShadow {
+    box-shadow: 0 4px 12px var(--daycare-btn-hover-shadow) !important;
+}
