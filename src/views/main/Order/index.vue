@@ -7,7 +7,7 @@
             <div class="d-flex flex-column flex-md-row align-center justify-space-between">
               <div class="d-flex align-center mb-4 mb-md-0">
                 <v-avatar color="primary" variant="tonal" size="48" class="mr-3">
-                  <v-icon color="primary">mdi-account-multiple</v-icon>
+                  <v-icon color="primary">mdi-file-document-multiple</v-icon>
                 </v-avatar>
                 <div>
                   <h2 class="hero-title mb-1">訂單管理面板</h2>
@@ -31,23 +31,23 @@
       <v-row class="summary-row" dense>
         <v-col cols="12" sm="6" md="4">
           <v-card class="summary-card" variant="tonal" color="primary">
-            <div class="summary-card__title">訂單總人數</div>
+            <div class="summary-card__title">訂單總數</div>
             <div class="summary-card__value">{{ totalCount }}</div>
             <div class="summary-card__caption">目前已建立的訂單數量</div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="6" md="4">
           <v-card class="summary-card" variant="tonal" color="secondary">
-            <div class="summary-card__title">有聯絡電話</div>
-            <div class="summary-card__value">{{ withContactPhoneCount }}</div>
-            <div class="summary-card__caption">已填寫聯絡電話的訂單</div>
+            <div class="summary-card__title">總數量</div>
+            <div class="summary-card__value">{{ totalQuantity }}</div>
+            <div class="summary-card__caption">所有訂單的總數量</div>
           </v-card>
         </v-col>
         <v-col cols="12" md="4">
           <v-card class="summary-card" variant="tonal" color="info">
-            <div class="summary-card__title">有送貨地址</div>
-            <div class="summary-card__value">{{ withDeliveryAddressCount }}</div>
-            <div class="summary-card__caption">已填寫送貨地址的訂單</div>
+            <div class="summary-card__title">總金額</div>
+            <div class="summary-card__value">{{ totalAmount }}</div>
+            <div class="summary-card__caption">所有訂單的總金額</div>
           </v-card>
         </v-col>
       </v-row>
@@ -61,9 +61,9 @@
                   prepend-inner-icon="mdi-magnify" hide-details single-line></v-text-field>
               </v-col>
               <v-col cols="12" md="4" class="d-flex justify-end mt-3 mt-md-0">
-                <importCustomer class="mr-md-2" @getAllData="getAllData"></importCustomer>
-                <popupadd v-if="auth.customer_add_key" ref="childFn" :authKeys="authKeys" :customerItems="items"
-                  :usingDatabase="usingDatabase" class="ml-md-2" @getAllData="getAllData"></popupadd>
+                <importOrder class="mr-md-2" @getAllData="getAllData"></importOrder>
+                <!-- <popupadd v-if="auth.customer_add_key" ref="childFn" :authKeys="authKeys" :customerItems="items"
+                  :usingDatabase="usingDatabase" class="ml-md-2" @getAllData="getAllData"></popupadd> -->
               </v-col>
             </v-row>
           </v-sheet>
@@ -80,18 +80,15 @@
                   <thead class="title text-h6">
                     <tr>
                       <th class="text-left"></th>
-                      <th class="text-left">訂單編號</th>
-                      <th class="text-left">訂單全稱</th>
-                      <th class="text-left">業務人員</th>
-                      <th class="text-left">聯絡人</th>
-                      <th class="text-left">聯絡電話</th>
-                      <th class="text-left">聯絡電話一</th>
-                      <th class="text-left">地址</th>
-                      <th class="text-left">送貨地址</th>
-                      <th class="text-left">郵遞區號</th>
-                      <th class="text-left">傳真號碼</th>
-                      <th class="text-left">行走路線</th>
-                      <th class="text-left">備註</th>
+                      <th class="text-left">單據號碼</th>
+                      <th class="text-left">客戶全稱</th>
+                      <th class="text-left">品名規格</th>
+                      <th class="text-left">單價</th>
+                      <th class="text-left">數量</th>
+                      <th class="text-left">金額</th>
+                      <th class="text-left">稅額</th>
+                      <th class="text-left">訂購日期</th>
+                      <th class="text-left">客戶編號</th>
                       <th class="text-left">創建紀錄</th>
                       <th class="text-left">修改紀錄</th>
                     </tr>
@@ -115,22 +112,15 @@
                           </v-list>
                         </v-menu>
                       </td>
-                      <td>{{ item.raw.customerNumber || '-' }}</td>
+                      <td>{{ item.raw.documentNumber || '-' }}</td>
                       <td>{{ item.raw.customerFullName || '-' }}</td>
-                      <td>{{ item.raw.salesPerson || '-' }}</td>
-                      <td>{{ item.raw.contactPerson || '-' }}</td>
-                      <td>{{ item.raw.contactPhone || '-' }}</td>
-                      <td>{{ item.raw.contactPhone1 || '-' }}</td>
-                      <td>{{ item.raw.address || '-' }}</td>
-                      <td>{{ item.raw.deliveryAddress || '-' }}</td>
-                      <td>{{ item.raw.postalCode || '-' }}</td>
-                      <td>{{ item.raw.faxNumber || '-' }}</td>
-                      <td>{{ item.raw.route || '-' }}</td>
-                      <td>
-                        <div class="text-truncate" style="max-width: 200px" :title="item.raw.notes">
-                          {{ item.raw.notes || '-' }}
-                        </div>
-                      </td>
+                      <td>{{ item.raw.productName || '-' }}</td>
+                      <td>{{ item.raw.unitPrice || '-' }}</td>
+                      <td>{{ item.raw.quantity || '-' }}</td>
+                      <td>{{ item.raw.amount || '-' }}</td>
+                      <td>{{ item.raw.taxAmount || '-' }}</td>
+                      <td>{{ formatDate(item.raw.orderDate) }}</td>
+                      <td>{{ item.raw.customerNumber || '-' }}</td>
                       <td>
                         <div v-if="item.raw.createInfo">
                           {{ `${item.raw.createInfo.name}(${item.raw.createInfo.time})` }}
@@ -163,11 +153,21 @@ import { ref, computed, onMounted } from 'vue'
 import { useStore } from '@/stores/useStore'
 import { getCurrentInstance } from 'vue'
 import popupadd from "./Add.vue"
-import importCustomer from "./importOrder.vue"
+import importOrder from "./importOrder.vue"
 
 import PaginatedIterator from '@/components/PaginatedIterator.vue'
 import dayjs from "dayjs"
 import api from '@/assets/js/api.js'
+
+// 格式化日期為 YYYY-MM-DD
+const formatDate = (dateValue) => {
+  if (!dateValue) return '-'
+  const date = dayjs(dateValue)
+  if (date.isValid()) {
+    return date.format('YYYY-MM-DD')
+  }
+  return dateValue || '-'
+}
 
 const { proxy } = getCurrentInstance()
 const store = useStore()
@@ -175,7 +175,7 @@ const childFn = ref(null)
 
 // 響應式數據
 const items = ref([])
-const usingDatabase = ref("customer")
+const usingDatabase = ref("orderdata")
 const searchKey = ref("")
 const auth = ref("")
 
@@ -193,12 +193,18 @@ const authKeys = computed(() => {
 })
 
 const totalCount = computed(() => items.value.length)
-const withContactPhoneCount = computed(() => 
-  items.value.filter((item) => item?.contactPhone || item?.contactPhone1).length
-)
-const withDeliveryAddressCount = computed(() => 
-  items.value.filter((item) => item?.deliveryAddress).length
-)
+const totalQuantity = computed(() => {
+  return items.value.reduce((sum, item) => {
+    const quantity = parseFloat(item?.quantity) || 0
+    return sum + quantity
+  }, 0)
+})
+const totalAmount = computed(() => {
+  return items.value.reduce((sum, item) => {
+    const amount = parseFloat(item?.amount) || 0
+    return sum + amount
+  }, 0).toLocaleString('zh-TW')
+})
 
 const searchfilter = computed(() => {
   const keys = searchKey.value.split(" ")
@@ -224,10 +230,10 @@ const getAllData = async () => {
         // picName: i.picName ? i.picName : "lazypic.jpg",
       }))
       
-      // 按訂單編號從小到大排序
+      // 按單據號碼從小到大排序
       items.value.sort((a, b) => {
-        const numA = a.customerNumber || ''
-        const numB = b.customerNumber || ''
+        const numA = a.documentNumber || ''
+        const numB = b.documentNumber || ''
         
         // 嘗試轉換為數字進行比較
         const numAInt = parseInt(numA)

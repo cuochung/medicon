@@ -77,23 +77,31 @@
               資料已成功解析，共 {{ datas.length }} 筆記錄
             </v-alert>
 
-            <v-table density="compact" class="preview-table">
+            <v-table density="compact" class="preview-table text-no-wrap">
               <thead>
                 <tr>
-                  <th>訂單全稱</th>
-                  <th>業務人員</th>
-                  <th>訂單編號</th>
-                  <th>聯絡人</th>
-                  <th>聯絡電話</th>
+                  <th>單據號碼</th>
+                  <th>客戶全稱</th>
+                  <th>品名規格</th>
+                  <th>單價</th>
+                  <th>數量</th>
+                  <th>金額</th>
+                  <th>稅額</th>
+                  <th>訂購日期</th>
+                  <th>客戶編號</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(item, index) in datas.slice(0, 5)" :key="index">
+                  <td>{{ item.documentNumber || '-' }}</td>
                   <td>{{ item.customerFullName || '-' }}</td>
-                  <td>{{ item.salesPerson || '-' }}</td>
+                  <td>{{ item.productName || '-' }}</td>
+                  <td>{{ item.unitPrice || '-' }}</td>
+                  <td>{{ item.quantity || '-' }}</td>
+                  <td>{{ item.amount || '-' }}</td>
+                  <td>{{ item.taxAmount || '-' }}</td>
+                  <td>{{ item.orderDate || '-' }}</td>
                   <td>{{ item.customerNumber || '-' }}</td>
-                  <td>{{ item.contactPerson || '-' }}</td>
-                  <td>{{ item.contactPhone || '-' }}</td>
                 </tr>
               </tbody>
             </v-table>
@@ -152,6 +160,49 @@ import dayjs from 'dayjs'
 const { proxy } = getCurrentInstance()
 const store = useStore()
 
+// 日期格式化函數：將各種日期格式轉換為 YYYY-MM-DD
+const formatDate = (dateValue) => {
+  if (!dateValue) return ''
+  
+  // 如果已經是 YYYY-MM-DD 格式，直接返回
+  if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    return dateValue
+  }
+  
+  // 嘗試使用 dayjs 解析日期
+  let date
+  if (dateValue instanceof Date) {
+    date = dayjs(dateValue)
+  } else if (typeof dateValue === 'number') {
+    // Excel 日期序列號
+    date = dayjs((dateValue - 25569) * 86400 * 1000)
+  } else {
+    // 字符串日期
+    date = dayjs(dateValue)
+  }
+  
+  // 如果解析成功，格式化為 YYYY-MM-DD
+  if (date.isValid()) {
+    return date.format('YYYY-MM-DD')
+  }
+  
+  // 如果解析失敗，嘗試手動處理常見格式
+  const str = String(dateValue).trim()
+  
+  // 處理 YYYY/MM/DD 格式
+  if (/^\d{4}\/\d{2}\/\d{2}$/.test(str)) {
+    return str.replace(/\//g, '-')
+  }
+  
+  // 處理 YYYYMMDD 格式
+  if (/^\d{8}$/.test(str)) {
+    return `${str.substring(0, 4)}-${str.substring(4, 6)}-${str.substring(6, 8)}`
+  }
+  
+  // 如果都無法處理，返回原值
+  return str
+}
+
 // Emits
 const emit = defineEmits(['getAllData'])
 
@@ -165,20 +216,15 @@ const loading = ref(false)
 
 // 欄位映射：中文欄位名 -> 英文欄位名
 const fieldMapping = {
-  '訂單全稱': 'customerFullName',
-  '業務人員': 'salesPerson',
-  '送貨地址': 'deliveryAddress',
-  '聯絡電話一': 'contactPhone1',
-  '訂單編號': 'customerNumber',
-  '地址編號': 'addressNumber',
-  '地址': 'address',
-  '郵遞區號': 'postalCode',
-  '聯絡人': 'contactPerson',
-  '聯絡電話': 'contactPhone',
-  '聯絡人職稱': 'contactTitle',
-  '傳真號碼': 'faxNumber',
-  '行走路線': 'route',
-  '備註': 'notes'
+  '單據號碼': 'documentNumber',
+  '客戶全稱': 'customerFullName',
+  '品名規格': 'productName',
+  '單價': 'unitPrice',
+  '數量': 'quantity',
+  '金額': 'amount',
+  '稅額': 'taxAmount',
+  '訂購日期': 'orderDate',
+  '客戶編號': 'customerNumber'
 }
 
 // Validation rules
@@ -291,7 +337,14 @@ const parseExcelFile = (file) => {
           // 根據映射轉換欄位
           Object.keys(headerIndexMap).forEach(englishField => {
             const index = headerIndexMap[englishField]
-            dataItem[englishField] = row[index] ? String(row[index]).trim() : ''
+            const cellValue = row[index]
+            
+            // 如果是日期欄位，進行格式化
+            if (englishField === 'orderDate' && cellValue) {
+              dataItem[englishField] = formatDate(cellValue)
+            } else {
+              dataItem[englishField] = cellValue ? String(cellValue).trim() : ''
+            }
           })
           
           parsedData.push(dataItem)
@@ -332,34 +385,31 @@ const processImport = async () => {
   loading.value = true
   
   try {
-    // 先取得資料庫中已存在的 customerNumber
-    const existingDataPayload = {
-      columns: 'customerNumber'
-    }
-    const existingDataResponse = await api.options(`general/getByColumns/${store.state.databaseName}/customer`, existingDataPayload)
+    // 讀取全部現有資料
+    const existingDataResponse = await api.get('orderdata')
     console.log('existingDataResponse', existingDataResponse)
    
-    // 從回應中提取已存在的 customerNumber 列表
-    const existingCustomerNumbers = new Set()
+    // 從回應中解析所有現有資料
+    const existingDatas = []
     if (Array.isArray(existingDataResponse)) {
       existingDataResponse.forEach((item) => {
         try {
-          let customerNumber = null
-          
-          // 如果直接有 customerNumber 欄位
-          if (item.customerNumber) {
-            customerNumber = String(item.customerNumber).trim()
-          } 
-          // 如果需要從 datalist 解析
-          else if (item.datalist) {
+          // 從 datalist 解析 JSON 資料
+          if (item.datalist) {
             const parsedData = JSON.parse(item.datalist || '{}')
-            if (parsedData.customerNumber) {
-              customerNumber = String(parsedData.customerNumber).trim()
+            // 只保留業務欄位，排除系統欄位（createInfo, editInfo, snkey 等）
+            const businessData = {
+              documentNumber: parsedData.documentNumber || '',
+              customerFullName: parsedData.customerFullName || '',
+              productName: parsedData.productName || '',
+              unitPrice: parsedData.unitPrice || '',
+              quantity: parsedData.quantity || '',
+              amount: parsedData.amount || '',
+              taxAmount: parsedData.taxAmount || '',
+              orderDate: formatDate(parsedData.orderDate) || '',
+              customerNumber: parsedData.customerNumber || ''
             }
-          }
-          
-          if (customerNumber) {
-            existingCustomerNumbers.add(customerNumber)
+            existingDatas.push(businessData)
           }
         } catch (error) {
           console.warn('解析已存在資料時發生錯誤:', error)
@@ -367,12 +417,43 @@ const processImport = async () => {
       })
     }
     
-    console.log('已存在的 customerNumber:', Array.from(existingCustomerNumbers))
+    console.log('已存在的資料筆數:', existingDatas.length)
 
-    // 過濾出不存在於資料庫中的資料
-    const newDatas = datas.value.filter((item) => {
-      const customerNumber = item.customerNumber ? String(item.customerNumber).trim() : ''
-      return customerNumber && !existingCustomerNumbers.has(customerNumber)
+    // 比較兩個資料物件是否所有欄位都相同
+    const isDataEqual = (data1, data2) => {
+      const fields = ['documentNumber', 'customerFullName', 'productName', 'unitPrice', 'quantity', 'amount', 'taxAmount', 'orderDate', 'customerNumber']
+      
+      for (const field of fields) {
+        const value1 = String(data1[field] || '').trim()
+        const value2 = String(data2[field] || '').trim()
+        if (value1 !== value2) {
+          return false
+        }
+      }
+      return true
+    }
+
+    // 過濾出不存在於資料庫中的資料（所有欄位都相同才算重複）
+    const newDatas = datas.value.filter((importItem) => {
+      // 標準化匯入資料的欄位值
+      const normalizedImportData = {
+        documentNumber: String(importItem.documentNumber || '').trim(),
+        customerFullName: String(importItem.customerFullName || '').trim(),
+        productName: String(importItem.productName || '').trim(),
+        unitPrice: String(importItem.unitPrice || '').trim(),
+        quantity: String(importItem.quantity || '').trim(),
+        amount: String(importItem.amount || '').trim(),
+        taxAmount: String(importItem.taxAmount || '').trim(),
+        orderDate: formatDate(importItem.orderDate) || '',
+        customerNumber: String(importItem.customerNumber || '').trim()
+      }
+      
+      // 檢查是否存在完全相同的資料
+      const isDuplicate = existingDatas.some((existingItem) => {
+        return isDataEqual(normalizedImportData, existingItem)
+      })
+      
+      return !isDuplicate
     })
     
     const skippedCount = datas.value.length - newDatas.length
@@ -387,7 +468,7 @@ const processImport = async () => {
       proxy.$swal({
         icon: 'info',
         title: '沒有新資料需要匯入',
-        text: `所有 ${datas.value.length} 筆資料的訂單編號都已存在於資料庫中`,
+        text: `所有 ${datas.value.length} 筆資料都已存在於資料庫中（所有欄位完全相同）`,
         confirmButtonText: '確定',
         confirmButtonColor: '#3085d6'
       })
@@ -399,7 +480,7 @@ const processImport = async () => {
       const shouldContinue = await proxy.$swal({
         icon: 'warning',
         title: '發現重複資料',
-        text: `共有 ${skippedCount} 筆資料的訂單編號已存在，將跳過這些資料。\n將匯入 ${newDatas.length} 筆新資料。\n是否繼續？`,
+        text: `共有 ${skippedCount} 筆資料的所有欄位都與資料庫中的資料完全相同，將跳過這些資料。\n將匯入 ${newDatas.length} 筆新資料。\n是否繼續？`,
         toast: false,
         timer: null,
         showConfirmButton: true,
@@ -416,7 +497,7 @@ const processImport = async () => {
     // 構建 payload 陣列，每個元素包含 datalist（JSON字符串）
     const payload = newDatas.map((item) => {
       return {
-        customerNumber: item.customerNumber,
+        documentNumber: item.documentNumber,
         datalist: JSON.stringify({
           ...item,
           createInfo: {
@@ -433,7 +514,7 @@ const processImport = async () => {
     console.log('資料筆數:', newDatas.length)
     console.log('Payload:', payload)
 
-    const rs = await api.options(`general/addMulti/${store.state.databaseName}/customer`, payload)
+    const rs = await api.options(`general/addMulti/${store.state.databaseName}/orderdata`, payload)
     loading.value = false
     
     // 檢查回應結果

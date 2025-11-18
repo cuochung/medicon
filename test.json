@@ -1,15 +1,17 @@
 {
-    "snkey": "4",
-    "name": "一般鼻胃管",
-    "unit": "18",
-    "start_date": "2025-11-14",
-    "end_date": "2025-11-15",
-    "note": "123",
-    "editInfo": [
-        {
-            "snkey": "31",
-            "name": "系統管理員",
-            "time": "2025-11-14 19:54:34"
-        }
-    ]
+    "documentNumber": "SO20251103001",
+    "customerFullName": "從頭開始",
+    "productName": "賦活金萃奇蹟面膜",
+    "unitPrice": "25",
+    "quantity": "986",
+    "amount": "23476",
+    "taxAmount": "1174",
+    "orderDate": "2025/11/03",
+    "customerNumber": "MD02066",
+    "createInfo": {
+        "snkey": "34",
+        "name": "系統管理員",
+        "time": "2025-11-18 14:24:43"
+    },
+    "editInfo": []
 }

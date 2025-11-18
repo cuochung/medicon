@@ -3,8 +3,8 @@
     <v-dialog v-model="dialog" max-width="1200" persistent>
       <template #activator="{ props }">
         <v-btn v-bind="props" class="customer-add-btn" color="primary" variant="elevated"
-          prepend-icon="mdi-account-plus" rounded="pill" elevation="6" @click="addProcess">
-          新增客戶
+          prepend-icon="mdi-file-document-plus" rounded="pill" elevation="6" @click="addProcess">
+          新增訂單
         </v-btn>
       </template>
 
@@ -19,20 +19,20 @@
           <v-form ref="form">
             <v-sheet class="info-section" color="primary-lighten-5" variant="tonal" rounded="lg">
               <div class="info-section__header">
-                <v-icon color="primary" size="24">mdi-account-details-outline</v-icon>
-                <span class="text-subtitle-1 font-weight-bold text-primary ml-2">基本資料</span>
+                <v-icon color="primary" size="24">mdi-file-document-edit-outline</v-icon>
+                <span class="text-subtitle-1 font-weight-bold text-primary ml-2">訂單基本資料</span>
               </div>
               <v-row dense class="mt-2">
                 <v-col cols="12" md="6">
                   <v-text-field
-                    label="客戶編號"
+                    label="單據號碼"
                     prepend-icon="mdi-identifier"
-                    v-model="list.customerNumber"
+                    v-model="list.documentNumber"
                     :rules="emptyRules"
                     autofocus
                     density="comfortable"
                     variant="outlined"
-                    hint="客戶編號不可重複"
+                    hint="單據號碼不可重複"
                     persistent-hint
                   ></v-text-field>
                 </v-col>
@@ -48,18 +48,18 @@
                 </v-col>
                 <v-col cols="12" md="6">
                   <v-text-field
-                    label="業務人員"
-                    prepend-icon="mdi-account-tie"
-                    v-model="list.salesPerson"
-                    density="comfortable"
-                    variant="outlined"
-                  ></v-text-field>
-                </v-col>
-                <v-col cols="12" md="6">
-                  <v-text-field
-                    label="聯絡人"
+                    label="客戶編號"
                     prepend-icon="mdi-account-outline"
-                    v-model="list.contactPerson"
+                    v-model="list.customerNumber"
+                    density="comfortable"
+                    variant="outlined"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    label="品名規格"
+                    prepend-icon="mdi-package-variant"
+                    v-model="list.productName"
                     density="comfortable"
                     variant="outlined"
                   ></v-text-field>
@@ -69,101 +69,59 @@
 
             <v-sheet class="info-section mt-4" color="primary-lighten-5" variant="tonal" rounded="lg">
               <div class="info-section__header">
-                <v-icon color="primary" size="24">mdi-phone-outline</v-icon>
-                <span class="text-subtitle-1 font-weight-bold text-primary ml-2">聯絡資訊</span>
+                <v-icon color="primary" size="24">mdi-cash-multiple</v-icon>
+                <span class="text-subtitle-1 font-weight-bold text-primary ml-2">訂單金額資訊</span>
               </div>
               <v-row dense class="mt-2">
-                <v-col cols="12" md="6">
+                <v-col cols="12" md="4">
                   <v-text-field
-                    label="聯絡電話"
-                    prepend-icon="mdi-phone"
-                    v-model="list.contactPhone"
-                    density="comfortable"
-                    variant="outlined"
-                  ></v-text-field>
-                </v-col>
-                <v-col cols="12" md="6">
-                  <v-text-field
-                    label="聯絡電話一"
-                    prepend-icon="mdi-phone-outline"
-                    v-model="list.contactPhone1"
-                    density="comfortable"
-                    variant="outlined"
-                  ></v-text-field>
-                </v-col>
-                <v-col cols="12" md="6">
-                  <v-text-field
-                    label="傳真號碼"
-                    prepend-icon="mdi-fax"
-                    v-model="list.faxNumber"
-                    density="comfortable"
-                    variant="outlined"
-                  ></v-text-field>
-                </v-col>
-              </v-row>
-            </v-sheet>
-
-            <v-sheet class="info-section mt-4" color="primary-lighten-5" variant="tonal" rounded="lg">
-              <div class="info-section__header">
-                <v-icon color="primary" size="24">mdi-map-marker-outline</v-icon>
-                <span class="text-subtitle-1 font-weight-bold text-primary ml-2">地址資訊</span>
-              </div>
-              <v-row dense class="mt-2">
-                <v-col cols="12">
-                  <v-text-field
-                    label="地址"
-                    prepend-icon="mdi-home-city"
-                    v-model="list.address"
-                    density="comfortable"
-                    variant="outlined"
-                  ></v-text-field>
-                </v-col>
-                <v-col cols="12" md="8">
-                  <v-text-field
-                    label="送貨地址"
-                    prepend-icon="mdi-truck-delivery"
-                    v-model="list.deliveryAddress"
+                    label="單價"
+                    prepend-icon="mdi-currency-twd"
+                    v-model="list.unitPrice"
+                    type="number"
                     density="comfortable"
                     variant="outlined"
                   ></v-text-field>
                 </v-col>
                 <v-col cols="12" md="4">
                   <v-text-field
-                    label="郵遞區號"
-                    prepend-icon="mdi-postage-stamp"
-                    v-model="list.postalCode"
+                    label="數量"
+                    prepend-icon="mdi-numeric"
+                    v-model="list.quantity"
+                    type="number"
+                    density="comfortable"
+                    variant="outlined"
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    label="金額"
+                    prepend-icon="mdi-cash"
+                    v-model="list.amount"
+                    type="number"
                     density="comfortable"
                     variant="outlined"
                   ></v-text-field>
                 </v-col>
                 <v-col cols="12" md="6">
                   <v-text-field
-                    label="行走路線"
-                    prepend-icon="mdi-map-outline"
-                    v-model="list.route"
+                    label="稅額"
+                    prepend-icon="mdi-receipt"
+                    v-model="list.taxAmount"
+                    type="number"
                     density="comfortable"
                     variant="outlined"
                   ></v-text-field>
                 </v-col>
-              </v-row>
-            </v-sheet>
-
-            <v-sheet class="info-section mt-4" color="primary-lighten-5" variant="tonal" rounded="lg">
-              <div class="info-section__header">
-                <v-icon color="primary" size="24">mdi-note-text-outline</v-icon>
-                <span class="text-subtitle-1 font-weight-bold text-primary ml-2">備註資訊</span>
-              </div>
-              <v-row dense class="mt-2">
-                <v-col cols="12">
-                  <v-textarea
-                    label="備註"
-                    prepend-icon="mdi-note-outline"
-                    v-model="list.notes"
+                <v-col cols="12" md="6">
+                  <v-text-field
+                    label="訂購日期"
+                    prepend-icon="mdi-calendar"
+                    v-model="list.orderDate"
+                    type="date"
                     density="comfortable"
                     variant="outlined"
-                    rows="3"
-                    auto-grow
-                  ></v-textarea>
+                  ></v-text-field>
                 </v-col>
               </v-row>
             </v-sheet>
@@ -207,18 +165,15 @@ const emit = defineEmits(['getAllData'])
 // Refs
 const dialog = ref(false)
 const list = ref({
-  customerNumber: '',
+  documentNumber: '',
   customerFullName: '',
-  salesPerson: '',
-  contactPerson: '',
-  contactPhone: '',
-  contactPhone1: '',
-  address: '',
-  deliveryAddress: '',
-  postalCode: '',
-  faxNumber: '',
-  route: '',
-  notes: '',
+  productName: '',
+  unitPrice: '',
+  quantity: '',
+  amount: '',
+  taxAmount: '',
+  orderDate: '',
+  customerNumber: '',
   createInfo: {},
   editInfo: []
 })
@@ -233,21 +188,18 @@ const emptyRules = [(v) => !!v || "不可空白"]
 // Methods
 const addProcess = () => {
   processType.value = "add"
-  title.value = "新增客戶資料"
+  title.value = "新增訂單資料"
   titleStyle.value = "dialog-title dialog-title--add"
   list.value = {
-    customerNumber: '',
+    documentNumber: '',
     customerFullName: '',
-    salesPerson: '',
-    contactPerson: '',
-    contactPhone: '',
-    contactPhone1: '',
-    address: '',
-    deliveryAddress: '',
-    postalCode: '',
-    faxNumber: '',
-    route: '',
-    notes: '',
+    productName: '',
+    unitPrice: '',
+    quantity: '',
+    amount: '',
+    taxAmount: '',
+    orderDate: '',
+    customerNumber: '',
     createInfo: {},
     editInfo: []
   }
@@ -259,22 +211,20 @@ const addProcess = () => {
 }
 
 const editProcess = (item) => {
+  console.log(item)
   processType.value = "edit"
-  title.value = "修改客戶資料"
+  title.value = "修改訂單資料"
   titleStyle.value = "dialog-title dialog-title--edit"
   list.value = { 
-    customerNumber: item.customerNumber || '',
+    documentNumber: item.documentNumber || '',
     customerFullName: item.customerFullName || '',
-    salesPerson: item.salesPerson || '',
-    contactPerson: item.contactPerson || '',
-    contactPhone: item.contactPhone || '',
-    contactPhone1: item.contactPhone1 || '',
-    address: item.address || '',
-    deliveryAddress: item.deliveryAddress || '',
-    postalCode: item.postalCode || '',
-    faxNumber: item.faxNumber || '',
-    route: item.route || '',
-    notes: item.notes || '',
+    productName: item.productName || '',
+    unitPrice: item.unitPrice || '',
+    quantity: item.quantity || '',
+    amount: item.amount || '',
+    taxAmount: item.taxAmount || '',
+    orderDate: item.orderDate || '',
+    customerNumber: item.customerNumber || '',
     snkey: item.snkey,
     createInfo: item.createInfo || {},
     editInfo: item.editInfo || []
@@ -283,11 +233,11 @@ const editProcess = (item) => {
 }
 
 const addOK = async () => {
-  // 新增時客戶編號不可重覆
+  // 新增時單據號碼不可重覆
   if (props.customerItems && props.customerItems.length > 0) {
-    const match = props.customerItems.find(i => i.customerNumber == list.value.customerNumber)
+    const match = props.customerItems.find(i => i.documentNumber == list.value.documentNumber)
     if (match) {
-      proxy.$swal({ icon: "error", title: "客戶編號不可重覆!!" })
+      proxy.$swal({ icon: "error", title: "單據號碼不可重覆!!" })
       return false
     }
   }
@@ -295,6 +245,14 @@ const addOK = async () => {
   // 確認新增
   const { valid } = await form.value.validate()
   if (valid) {
+    // 格式化日期為 YYYY-MM-DD
+    if (list.value.orderDate) {
+      const date = dayjs(list.value.orderDate)
+      if (date.isValid()) {
+        list.value.orderDate = date.format('YYYY-MM-DD')
+      }
+    }
+    
     list.value.createInfo = {
       snkey: store.state.pData.snkey,
       name: store.state.pData.username,
@@ -324,17 +282,25 @@ const editOK = async () => {
   // 確認修改
   const { valid } = await form.value.validate()
   if (valid) {
-    // 檢查客戶編號是否與其他客戶重複（排除自己）
+    // 檢查單據號碼是否與其他訂單重複（排除自己）
     if (props.customerItems && props.customerItems.length > 0) {
       const match = props.customerItems.find(i => 
-        i.customerNumber == list.value.customerNumber && i.snkey != list.value.snkey
+        i.documentNumber == list.value.documentNumber && i.snkey != list.value.snkey
       )
       if (match) {
-        proxy.$swal({ icon: "error", title: "客戶編號不可重覆!!" })
+        proxy.$swal({ icon: "error", title: "單據號碼不可重覆!!" })
         return false
       }
     }
 
+    // 格式化日期為 YYYY-MM-DD
+    if (list.value.orderDate) {
+      const date = dayjs(list.value.orderDate)
+      if (date.isValid()) {
+        list.value.orderDate = date.format('YYYY-MM-DD')
+      }
+    }
+    
     if (!list.value.editInfo) {
       list.value.editInfo = []
     }
