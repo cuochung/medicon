@@ -96,7 +96,7 @@
                   <tbody>
                     <tr v-for="(item, index) in items" :key="index">
                       <td>
-                        <v-menu transition="scale-transition" offset-y>
+                        <!-- <v-menu transition="scale-transition" offset-y>
                           <template v-slot:activator="{ props }">
                             <v-btn icon v-bind="props">
                               <img src="@/assets/gear.svg" alt="" />
@@ -110,7 +110,7 @@
                               <v-list-item-title>刪除</v-list-item-title>
                             </v-list-item>
                           </v-list>
-                        </v-menu>
+                        </v-menu> -->
                       </td>
                       <td>{{ item.raw.documentNumber || '-' }}</td>
                       <td>{{ item.raw.customerFullName || '-' }}</td>
