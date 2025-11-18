@@ -1,8 +1,5 @@
 <template>
   <div class="customer-list pa-6">
-    <!-- 上傳file用的input -->
-    <input type="file" accept="image/*" ref="fileInput" @change="onFileSelected" style="display: none" />
-
     <v-container fluid class="pa-0">
       <v-row>
         <v-col cols="12">
@@ -13,8 +10,8 @@
                   <v-icon color="primary">mdi-account-multiple</v-icon>
                 </v-avatar>
                 <div>
-                  <h2 class="hero-title mb-1">人員管理面板</h2>
-                  <p class="hero-subtitle mb-0">維護日間照護服務團隊，掌握權限與任職資訊。</p>
+                  <h2 class="hero-title mb-1">訂單管理面板</h2>
+                  <p class="hero-subtitle mb-0">維護訂單資料，掌握訂單資訊。</p>
                 </div>
               </div>
               <div class="d-flex align-center gap-3">
@@ -34,23 +31,23 @@
       <v-row class="summary-row" dense>
         <v-col cols="12" sm="6" md="4">
           <v-card class="summary-card" variant="tonal" color="primary">
-            <div class="summary-card__title">團隊總人數</div>
+            <div class="summary-card__title">訂單總人數</div>
             <div class="summary-card__value">{{ totalCount }}</div>
-            <div class="summary-card__caption">目前已建立的團隊成員數量</div>
+            <div class="summary-card__caption">目前已建立的訂單數量</div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="6" md="4">
           <v-card class="summary-card" variant="tonal" color="secondary">
-            <div class="summary-card__title">啟用中</div>
-            <div class="summary-card__value">{{ activeCount }}</div>
-            <div class="summary-card__caption">未停職、可登入系統的人員</div>
+            <div class="summary-card__title">有聯絡電話</div>
+            <div class="summary-card__value">{{ withContactPhoneCount }}</div>
+            <div class="summary-card__caption">已填寫聯絡電話的訂單</div>
           </v-card>
         </v-col>
         <v-col cols="12" md="4">
           <v-card class="summary-card" variant="tonal" color="info">
-            <div class="summary-card__title">停職 / 暫停</div>
-            <div class="summary-card__value">{{ suspendedCount }}</div>
-            <div class="summary-card__caption">勾選停職的團隊成員</div>
+            <div class="summary-card__title">有送貨地址</div>
+            <div class="summary-card__value">{{ withDeliveryAddressCount }}</div>
+            <div class="summary-card__caption">已填寫送貨地址的訂單</div>
           </v-card>
         </v-col>
       </v-row>
@@ -60,10 +57,11 @@
           <v-sheet class="customer-toolbar" elevation="0" rounded="xl">
             <v-row align="center" no-gutters>
               <v-col cols="12" md="8">
-                <v-text-field v-model="searchKey" label="搜尋人員關鍵字" density="comfortable" variant="outlined"
+                <v-text-field v-model="searchKey" label="搜尋訂單關鍵字" density="comfortable" variant="outlined"
                   prepend-inner-icon="mdi-magnify" hide-details single-line></v-text-field>
               </v-col>
               <v-col cols="12" md="4" class="d-flex justify-end mt-3 mt-md-0">
+                <importCustomer class="mr-md-2" @getAllData="getAllData"></importCustomer>
                 <popupadd v-if="auth.customer_add_key" ref="childFn" :authKeys="authKeys" :customerItems="items"
                   :usingDatabase="usingDatabase" class="ml-md-2" @getAllData="getAllData"></popupadd>
               </v-col>
@@ -82,11 +80,18 @@
                   <thead class="title text-h6">
                     <tr>
                       <th class="text-left"></th>
-                      <th class="text-left">個人照</th>
-                      <th class="text-left">登入帳號</th>
-                      <th class="text-left">姓名</th>
-                      <th class="text-left">停職</th>
-                      <th class="text-left">可用權限</th>
+                      <th class="text-left">訂單編號</th>
+                      <th class="text-left">訂單全稱</th>
+                      <th class="text-left">業務人員</th>
+                      <th class="text-left">聯絡人</th>
+                      <th class="text-left">聯絡電話</th>
+                      <th class="text-left">聯絡電話一</th>
+                      <th class="text-left">地址</th>
+                      <th class="text-left">送貨地址</th>
+                      <th class="text-left">郵遞區號</th>
+                      <th class="text-left">傳真號碼</th>
+                      <th class="text-left">行走路線</th>
+                      <th class="text-left">備註</th>
                       <th class="text-left">創建紀錄</th>
                       <th class="text-left">修改紀錄</th>
                     </tr>
@@ -107,58 +112,39 @@
                             <v-list-item @click="del(item.raw)" v-if="auth.customer_del_key">
                               <v-list-item-title>刪除</v-list-item-title>
                             </v-list-item>
-                            <v-list-item @click="uploadItem = item.raw; $refs.fileInput.click();">
-                              <v-list-item-title>上傳圖片</v-list-item-title>
-                            </v-list-item>
                           </v-list>
                         </v-menu>
                       </td>
+                      <td>{{ item.raw.customerNumber || '-' }}</td>
+                      <td>{{ item.raw.customerFullName || '-' }}</td>
+                      <td>{{ item.raw.salesPerson || '-' }}</td>
+                      <td>{{ item.raw.contactPerson || '-' }}</td>
+                      <td>{{ item.raw.contactPhone || '-' }}</td>
+                      <td>{{ item.raw.contactPhone1 || '-' }}</td>
+                      <td>{{ item.raw.address || '-' }}</td>
+                      <td>{{ item.raw.deliveryAddress || '-' }}</td>
+                      <td>{{ item.raw.postalCode || '-' }}</td>
+                      <td>{{ item.raw.faxNumber || '-' }}</td>
+                      <td>{{ item.raw.route || '-' }}</td>
                       <td>
-                        <div class="preview-avatar">
-                          <showBigpic :item="item.raw.picInfo" :folder="usingDatabase" v-if="item.raw?.picInfo?.picName" style="width: 150px;" />
-                        </div>
-                      </td>
-                      <td>{{ item.raw.account }}</td>
-                      <td>{{ item.raw.username }}</td>
-                      <td>
-                        <v-checkbox hide-details v-model="item.raw.suspension" value="true"
-                          @click.stop="suspensionSet(item.raw)"></v-checkbox>
-                      </td>
-                      <td>
-                        <div class="d-flex flex-wrap gap-2">
-                          <div v-for="authKey in authKeys" :key="authKey.label">
-                            <v-chip :class="authKey.class" :color="authKey.color"
-                              v-if="item.raw[`${authKey.keyName}_key`]">
-                              {{ authKey.label }}
-                            </v-chip>
-                            <v-chip :class="authKey.class" :color="authKey.color"
-                              v-if="item.raw[`${authKey.keyName}_add_key`]">
-                              增
-                            </v-chip>
-                            <v-chip :class="authKey.class" :color="authKey.color"
-                              v-if="item.raw[`${authKey.keyName}_edit_key`]">
-                              修
-                            </v-chip>
-                            <v-chip :class="authKey.class" :color="authKey.color"
-                              v-if="item.raw[`${authKey.keyName}_del_key`]">
-                              刪
-                            </v-chip>
-                            <v-chip :class="authKey.class" :color="authKey.color"
-                              v-if="item.raw[`${authKey.keyName}_search_key`]">
-                              查
-                            </v-chip>
-                          </div>
+                        <div class="text-truncate" style="max-width: 200px" :title="item.raw.notes">
+                          {{ item.raw.notes || '-' }}
                         </div>
                       </td>
                       <td>
-                        {{ `${item.raw.createInfo.name}(${item.raw.createInfo.time})` }}
+                        <div v-if="item.raw.createInfo">
+                          {{ `${item.raw.createInfo.name}(${item.raw.createInfo.time})` }}
+                        </div>
+                        <span v-else>-</span>
                       </td>
                       <td>
-                        <div v-if="item.raw.editInfo" class="text-truncate" style="max-width: 400px">
-                          <span v-for="(i, index) in item.raw.editInfo" :key="index">
+                        <div v-if="item.raw.editInfo && item.raw.editInfo.length > 0" class="text-truncate" style="max-width: 400px">
+                          <span v-for="(i, idx) in item.raw.editInfo" :key="idx">
                             {{ `${i.name}(${i.time})` }}
+                            <span v-if="idx < item.raw.editInfo.length - 1">; </span>
                           </span>
                         </div>
+                        <span v-else>-</span>
                       </td>
                     </tr>
                   </tbody>
@@ -176,9 +162,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useStore } from '@/stores/useStore'
 import { getCurrentInstance } from 'vue'
-import showBigpic from "@/components/showBigpic.vue"
 import popupadd from "./Add.vue"
-// import customerAdd from "./customerAdd.vue"
+import importCustomer from "./importOrder.vue"
 
 import PaginatedIterator from '@/components/PaginatedIterator.vue'
 import dayjs from "dayjs"
@@ -187,16 +172,12 @@ import api from '@/assets/js/api.js'
 const { proxy } = getCurrentInstance()
 const store = useStore()
 const childFn = ref(null)
-const fileInput = ref(null)
 
 // 響應式數據
 const items = ref([])
 const usingDatabase = ref("customer")
 const searchKey = ref("")
 const auth = ref("")
-const picBaseUrl = ref(null)
-const selectedFile = ref("")
-const uploadItem = ref("") // 上傳圖片的資料內容暫存
 
 // 分頁相關
 const currentPage = ref(1);
@@ -212,8 +193,12 @@ const authKeys = computed(() => {
 })
 
 const totalCount = computed(() => items.value.length)
-const suspendedCount = computed(() => items.value.filter((item) => item?.suspension === "true").length)
-const activeCount = computed(() => totalCount.value - suspendedCount.value)
+const withContactPhoneCount = computed(() => 
+  items.value.filter((item) => item?.contactPhone || item?.contactPhone1).length
+)
+const withDeliveryAddressCount = computed(() => 
+  items.value.filter((item) => item?.deliveryAddress).length
+)
 
 const searchfilter = computed(() => {
   const keys = searchKey.value.split(" ")
@@ -238,6 +223,24 @@ const getAllData = async () => {
         snkey: i.snkey,
         // picName: i.picName ? i.picName : "lazypic.jpg",
       }))
+      
+      // 按訂單編號從小到大排序
+      items.value.sort((a, b) => {
+        const numA = a.customerNumber || ''
+        const numB = b.customerNumber || ''
+        
+        // 嘗試轉換為數字進行比較
+        const numAInt = parseInt(numA)
+        const numBInt = parseInt(numB)
+        
+        // 如果兩個都是有效數字，按數字排序
+        if (!isNaN(numAInt) && !isNaN(numBInt)) {
+          return numAInt - numBInt
+        }
+        
+        // 否則按字符串排序
+        return String(numA).localeCompare(String(numB), 'zh-TW', { numeric: true })
+      })
     }
   })
 
@@ -274,161 +277,24 @@ const del = async (item) => {
 
       const rs = await api.delete(usingDatabase.value, postData)
       if (rs.state == 1) {
-
-        if (item.picInfo.picName && item.picInfo.picName != "lazypic.jpg") {
-          console.log('del process run del pic')
-          let delPicRs = await delExistPic(uploadItem.value.picInfo.picName)
-          if (delPicRs.state == 1) {
-            proxy.$swal({
-              icon: "success",
-              title: "刪除成功",
-              confirmButtonText: '確定',
-              confirmButtonColor: '#3085d6',
-              allowEscapeKey: false
-            })
-          }
-        }
-
+        proxy.$swal({
+          icon: "success",
+          title: "刪除成功",
+          confirmButtonText: '確定',
+          confirmButtonColor: '#3085d6',
+          allowEscapeKey: false
+        })
         await getAllData();
       }
     }
   })
 }
 
-const suspensionSet = (item) => {
-  proxy.$swal({
-    title: '確認更動停權設定?',
-    icon: 'warning',
-    toast: false,
-    timer: null,
-    showConfirmButton: true,
-    showCancelButton: true,
-    position: 'center'
-  }).then((result) => {
-    if (result.isConfirmed) {
-      if (item.edit_man == undefined) {
-        item.edit_man = ""
-      }
-      item.edit_man = `${store.state.pData.name}(${dayjs().format("YYYY-MM-DD HH:mm:ss")})${item.edit_man}`
-
-      const postData = {
-        snkey: item.snkey,
-        datalist: JSON.stringify(item),
-      }
-
-      api.post(usingDatabase.value, postData).then((rs) => {
-        if (rs.state == 1) {
-          proxy.$swal({
-            icon: "success",
-            title: "已修改,權限相關功能將在重新登入後生效",
-          })
-          getAllData()
-        }
-      })
-    } else {
-      if (item.suspension === null) {
-        item.suspension = "true"
-      } else {
-        item.suspension = null
-      }
-    }
-  })
-}
-
-const onFileSelected = async (event) => {
-  selectedFile.value = event.target.files[0]
-  const extension = selectedFile.value.name.split(".").pop().toLowerCase()
-  const fitType = ["gif", "png", "jpg", "jpeg"]
-
-  let errorMsg = ""
-  if (fitType.indexOf(extension) == -1) {
-    errorMsg = "檔案:" + selectedFile.value.name + "不是支持的影像檔案"
-  }
-  if (selectedFile.value.size > 1024 * 1024 * 5) {
-    errorMsg = "檔案:" + selectedFile.value.name + "不能超過5M唷"
-  }
-
-  if (errorMsg == "") {
-    //上傳前確認檔案是否存在，存在就刪除
-    if (uploadItem.value.picInfo && uploadItem.value.picInfo.picName && uploadItem.value.picInfo.picName != "lazypic.jpg") {
-      await delExistPic(uploadItem.value.picInfo.picName)
-    }
-    console.log('selectedFile', selectedFile.value)
-    //執行上傳圖片，接受狀態
-    const rs = await onUpload(`customer`) // 上傳圖片到customer資料庫
-    console.log('upload rs', rs)
-
-    if (rs.state != 1) {
-      proxy.$swal({
-        icon: "error",
-        title: "上傳失敗，請聯絡系統服務商"
-      })
-      return
-    } else {
-      //更新圖片名稱到資料庫
-      uploadItem.value.picInfo =
-      {
-        picName: rs.newName,
-        picOriginalName: selectedFile.value.name
-      }
-
-      const postData = {
-        snkey: uploadItem.value.snkey,
-        datalist: JSON.stringify(uploadItem.value),
-      }
-      api.post(usingDatabase.value, postData)
-
-      //更新畫面
-      items.value.some((item) => {
-        if (item.snkey == uploadItem.value.snkey) {
-          item.picName = rs.picName
-        }
-      })
-
-      // 清空input，否則無法上傳同一張圖片
-      fileInput.value.value = ""
-    }
-  } else {
-    proxy.$swal({
-      icon: "error",
-      title: errorMsg
-    })
-    selectedFile.value = ""
-  }
-}
-
-//上傳圖片或檔案都適用
-const onUpload = (tablename) => {
-  const fd = new FormData()
-  fd.append("file", selectedFile.value)
-  return api.upload(tablename, fd)
-}
-
-const delExistPic = async (picName) => {
-  const url = `general/delPic/${usingDatabase.value}/${picName}`
-  const rs = await api.options(url)
-  console.log('delExistPic rs', rs)
-
-  if (rs.state == 1) {
-    store.showToastMulti({
-      type: 'success',
-      message: '舊圖片刪除成功',
-      closeTime: 2,
-    })
-  } else {
-    store.showToastMulti({
-      type: 'error',
-      message: '舊圖片刪除失敗',
-      closeTime: 2,
-    })
-  }
-}
 
 // 生命週期鉤子
 onMounted(async () => {
   auth.value = store.state.pData
   await getAllData()
-  picBaseUrl.value = `${store.state.base_url}/upload/${usingDatabase.value}/`
 })
 </script>
 
@@ -509,5 +375,58 @@ onMounted(async () => {
   display: inline-flex;
   border-radius: 50%;
   box-shadow: 0 6px 16px rgba(74, 107, 95, 0.16);
+}
+
+// 按鈕 hover 樣式
+:deep(.v-btn) {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 107, 95, 0.25);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// 重新整理按鈕 hover
+.customer-hero :deep(.v-btn) {
+  &:hover {
+    background-color: rgba(74, 107, 95, 0.15) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(74, 107, 95, 0.3);
+  }
+}
+
+// 工具列按鈕 hover
+.customer-toolbar :deep(.v-btn) {
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 107, 95, 0.3);
+  }
+}
+
+// 表格操作按鈕 hover
+.customer-table-card :deep(.v-btn) {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: rgba(74, 107, 95, 0.1) !important;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(74, 107, 95, 0.2);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// 圖標按鈕 hover
+:deep(.v-btn--icon) {
+  &:hover {
+    background-color: rgba(74, 107, 95, 0.1) !important;
+  }
 }
 </style>
