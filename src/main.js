@@ -9,6 +9,7 @@ import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
 import '@mdi/font/css/materialdesignicons.css'
+import { zhHant } from 'vuetify/locale'
 
 import "@/assets/css/mytransition.css"
 import "@/assets/css/mystyle.css"
@@ -45,6 +46,10 @@ const sweetalert2Options = {
 const vuetify = createVuetify({
     components,
     directives,
+    locale: {
+        locale: 'zhHant',
+        messages: { zhHant }
+    }
 })
 
 const app = createApp(App)

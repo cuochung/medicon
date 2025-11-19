@@ -271,7 +271,7 @@ const del = async (item) => {
     if (result.isConfirmed) {
 
       item.delInfo = {
-        name: store.state.pData.name,
+        name: store.state.pData.username,
         time: dayjs().format("YYYY-MM-DD HH:mm:ss"),
       }
 

@@ -41,7 +41,13 @@ export const useStore = defineStore('company', () => {
         authKey: "personnel_key",
         icon: 'mdi-account',
       },
-      
+      {
+        label: "會員儲值", class: "ma-1 white--text", color: "success", keyName: 'wallet',
+        image: new URL('@/assets/img/saifu_gamaguchi.png', import.meta.url).href,
+        route: "/main/Wallet",
+        authKey: "wallet_key",
+        icon: 'mdi-wallet',
+      },
 
       {
         label: "登出", class: "ma-1 white--text", color: "dark", keyName: 'exit',
