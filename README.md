@@ -1,8 +1,337 @@
-# Vue 3 + Vite + Pinia + SweetAlert2 +Vuetify3
-- 使用 mediconapi 當資料庫樣本
-- 後台 使用vue3vuetifyapi; (git上名稱應該是 vue3Projectapi)
+# Medicon 美光生技管理系統
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+一個基於 Vue 3 的現代化企業管理系統，提供客戶管理、訂單管理、人員管理和會員儲值等完整功能。
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
-# medicon
+## 📋 專案簡介
+
+Medicon 是一個功能完整的企業後台管理系統，採用現代化的前端技術棧開發，提供直觀易用的操作介面和完整的業務流程管理。
+
+## 🛠️ 技術棧
+
+- **前端框架**: Vue 3.5.18 (Composition API)
+- **建置工具**: Vite 7.1.2
+- **UI 框架**: Vuetify 3.9.6
+- **狀態管理**: Pinia 3.0.3
+- **路由**: Vue Router 4.5.1
+- **HTTP 請求**: Axios 1.11.0
+- **日期處理**: Day.js 1.11.18
+- **Excel 處理**: XLSX 0.18.5
+- **提示框**: SweetAlert2 11.22.5
+- **樣式**: SCSS/SASS
+
+## ✨ 主要功能模組
+
+### 1. 人員管理系統 (Personnel Management)
+
+#### 功能特點
+- **人員列表管理**: 查看所有團隊成員資訊
+- **新增/編輯人員**: 完整的 CRUD 操作
+- **權限管理**: 細緻的權限控制系統（增、刪、改、查權限）
+- **圖片上傳**: 支援人員照片上傳（支援 gif, png, jpg, jpeg，最大 5MB）
+- **停職管理**: 可設定人員停職/啟用狀態
+- **搜尋功能**: 多關鍵字搜尋人員資訊
+- **統計資訊**: 
+  - 團隊總人數
+  - 啟用中人員數
+  - 停職/暫停人員數
+
+#### 權限控制
+- `personnel_key`: 人員管理權限
+- `personnel_add_key`: 新增權限
+- `personnel_edit_key`: 編輯權限
+- `personnel_del_key`: 刪除權限
+- `personnel_search_key`: 查詢權限
+
+---
+
+### 2. 客戶管理系統 (Customer Management)
+
+#### 功能特點
+- **客戶列表管理**: 完整的客戶資料管理
+- **Excel 匯入**: 支援批量匯入客戶資料
+- **多條件搜尋**: 支援多關鍵字搜尋（空格分隔）
+- **客戶資訊欄位**:
+  - 客戶編號
+  - 客戶全稱
+  - 業務人員
+  - 聯絡人
+  - 聯絡電話 / 聯絡電話一
+  - 地址 / 送貨地址
+  - 郵遞區號
+  - 傳真號碼
+  - 行走路線
+  - 備註
+- **統計資訊**:
+  - 客戶總人數
+  - 有聯絡電話的客戶數
+  - 有送貨地址的客戶數
+- **資料排序**: 自動按客戶編號排序
+
+#### 權限控制
+- `customer_key`: 客戶管理權限
+- `customer_add_key`: 新增權限
+- `customer_edit_key`: 編輯權限
+- `customer_del_key`: 刪除權限
+- `customer_search_key`: 查詢權限
+
+---
+
+### 3. 訂單管理系統 (Order Management)
+
+#### 功能特點
+- **訂單列表管理**: 完整的訂單資料管理
+- **Excel 匯入**: 支援批量匯入訂單資料
+- **多條件搜尋**: 支援多關鍵字搜尋
+- **訂單資訊欄位**:
+  - 單據號碼
+  - 客戶全稱 / 客戶編號
+  - 品名規格
+  - 單價 / 數量 / 金額
+  - 稅額
+  - 訂購日期
+- **統計資訊**:
+  - 訂單總數
+  - 總數量
+  - 總金額
+- **資料排序**: 自動按單據號碼排序
+
+#### 權限控制
+- `order_key`: 訂單管理權限
+- `order_add_key`: 新增權限
+- `order_edit_key`: 編輯權限
+- `order_del_key`: 刪除權限
+- `order_search_key`: 查詢權限
+
+---
+
+### 4. 會員儲值系統 (Wallet System) ⭐ 核心功能
+
+會員儲值系統是本專案的核心功能模組，提供完整的儲值、扣款、查詢和記錄追蹤功能。
+
+#### 4.1 儲值功能 (Recharge)
+- **客戶選擇**: 自動完成客戶搜尋與選擇
+- **餘額顯示**: 即時顯示客戶當前餘額
+- **儲值操作**: 
+  - 輸入儲值金額
+  - 備註說明
+  - 確認儲值
+- **交易記錄**: 自動記錄儲值交易
+- **統計資訊**: 顯示累計儲值、累計扣款
+
+#### 4.2 扣款功能 (Deduction)
+- **訂單篩選**: 
+  - 日期範圍篩選
+  - 客戶篩選
+  - 扣款狀態篩選（未扣款/已扣款）
+- **批量選擇**: 支援多筆訂單批量扣款
+- **餘額驗證**: 自動檢查客戶餘額是否足夠
+- **扣款操作**: 
+  - 單筆扣款
+  - 批量扣款
+  - 扣款確認與記錄
+
+#### 4.3 餘額查詢 (Balance Query)
+- **客戶選擇**: 快速選擇客戶
+- **餘額資訊**: 
+  - 當前餘額
+  - 累計儲值
+  - 累計扣款
+  - 最後交易日期
+- **交易明細**: 查看該客戶的所有交易記錄
+
+#### 4.4 交易記錄查詢 (Transaction History)
+- **多條件查詢**:
+  - 客戶名稱
+  - 交易類型（儲值/扣款）
+  - 日期範圍（開始日期/結束日期）
+- **交易列表**: 
+  - 交易日期時間
+  - 交易類型
+  - 交易金額
+  - 交易後餘額
+  - 備註說明
+- **資料匯出**: 支援匯出查詢結果
+
+#### 4.5 訂單查詢 (Order Query)
+- **多條件查詢**:
+  - 日期範圍
+  - 客戶名稱
+  - 扣款狀態
+- **訂單資訊**: 
+  - 單據號碼
+  - 客戶資訊
+  - 訂單金額
+  - 扣款狀態
+  - 扣款日期
+- **扣款記錄**: 查看訂單扣款詳細記錄
+
+#### 儲值系統統計資訊
+- **總會員數**: 已建立儲值記錄的會員數
+- **總餘額**: 所有會員的總儲值餘額
+- **累計儲值**: 系統累計儲值總額
+- **累計扣款**: 系統累計扣款總額
+
+#### 權限控制
+- `wallet_key`: 儲值系統權限
+
+---
+
+## 📁 專案結構
+
+```
+medicon/
+├── src/
+│   ├── assets/              # 靜態資源
+│   │   ├── css/            # 樣式文件
+│   │   ├── img/            # 圖片資源
+│   │   └── js/             # JavaScript 工具
+│   │       ├── api.js      # API 封裝
+│   │       └── toast.js    # Toast 提示
+│   ├── components/          # 共用組件
+│   │   ├── PDDComponents/  # 自定義組件庫
+│   │   ├── DatePicker.vue
+│   │   ├── FloatingPanel.vue
+│   │   ├── Navbar.vue
+│   │   ├── PaginatedIterator.vue
+│   │   └── showBigpic.vue
+│   ├── router/             # 路由配置
+│   │   └── index.js
+│   ├── stores/             # Pinia 狀態管理
+│   │   └── useStore.js
+│   ├── views/              # 頁面組件
+│   │   ├── login/          # 登入頁面
+│   │   └── main/           # 主要功能頁面
+│   │       ├── Customer/   # 客戶管理
+│   │       ├── Order/      # 訂單管理
+│   │       ├── Personnel/  # 人員管理
+│   │       └── Wallet/     # 儲值系統
+│   ├── App.vue
+│   ├── main.js
+│   └── style.css
+├── public/                  # 公開資源
+├── package.json
+├── vite.config.js
+└── README.md
+```
+
+## 🚀 安裝與運行
+
+### 環境要求
+- Node.js >= 16.0.0
+- npm >= 7.0.0
+
+### 安裝依賴
+
+```bash
+npm install
+```
+
+### 開發模式
+
+```bash
+npm run dev
+```
+
+開發伺服器將在 `http://localhost:5173` 啟動
+
+### 建置生產版本
+
+```bash
+npm run build
+```
+
+### 預覽生產版本
+
+```bash
+npm run preview
+```
+
+## ⚙️ 配置說明
+
+### API 設定
+
+API 基礎 URL 配置在 `src/stores/useStore.js`:
+
+```javascript
+base_url: "http://localhost/mediconapi"  // 開發環境
+// base_url: "https://www.pddtvgame.com/mediconapi"  // 生產環境
+```
+
+### 資料庫設定
+
+資料庫名稱配置在 `src/stores/useStore.js`:
+
+```javascript
+databaseName: "medicon"
+```
+
+## 🎨 UI/UX 特色
+
+- **現代化設計**: 採用 Daycare Style 設計風格
+- **響應式佈局**: 支援桌面、平板、手機等各種裝置
+- **流暢動畫**: 豐富的過渡動畫效果
+- **直觀操作**: 清晰的視覺層次和操作流程
+- **即時反饋**: Toast 提示和載入動畫
+
+## 📝 開發規範
+
+### 組件命名
+- 使用 PascalCase 命名組件
+- 頁面組件放在 `views/` 目錄
+- 共用組件放在 `components/` 目錄
+
+### 狀態管理
+- 使用 Pinia 進行全局狀態管理
+- 用戶資訊、權限資訊存儲在 store 中
+
+### API 調用
+- 統一使用 `src/assets/js/api.js` 封裝的 API 方法
+- 支援 GET、POST、DELETE、UPLOAD 等操作
+
+## 🔐 權限系統
+
+系統採用細緻的權限控制機制，每個功能模組都有獨立的權限設定：
+
+- **模組權限**: 控制是否可訪問該功能模組
+- **操作權限**: 控制增、刪、改、查等具體操作
+- **權限驗證**: 在路由和組件層面進行權限驗證
+
+## 📊 資料處理
+
+### Excel 匯入
+- 支援 `.xlsx` 和 `.xls` 格式
+- 自動驗證資料格式
+- 批量匯入客戶和訂單資料
+
+### 資料排序
+- 客戶資料按客戶編號排序
+- 訂單資料按單據號碼排序
+
+### 資料搜尋
+- 支援多關鍵字搜尋（空格分隔）
+- 全文搜尋功能
+
+## 🐛 已知問題與注意事項
+
+1. **圖片上傳**: 單檔最大 5MB，支援格式：gif, png, jpg, jpeg
+2. **Excel 匯入**: 需確保 Excel 格式符合系統要求
+3. **權限變更**: 人員權限變更需重新登入後生效
+
+## 📞 技術支援
+
+- **後端 API**: 使用 mediconapi 作為資料庫樣本
+- **後台系統**: mediconapi (git 上名稱: mediconapi)
+
+## 📄 授權
+
+本專案為美光生技內部使用系統。
+
+## 🔄 版本資訊
+
+- **當前版本**: 2025.11.19.1
+- **最後更新**: 2025年
+
+---
+
+**開發團隊**: PDDTECH Development Team  
+**專案名稱**: Medicon 美光生技管理系統
