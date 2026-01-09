@@ -18,6 +18,7 @@ const routes = [
     // meta: { title: '主畫面' },
     children: [
       { path: 'functionlist', name: 'functionlist', component: () => import('@/views/main/FunctionList.vue') },
+      { path: 'Supplier', name: 'Supplier', component: () => import('@/views/main/Supplier/index.vue') },
       { path: 'Personnel', name: 'Personnel', component: () => import('@/views/main/Personnel/index.vue') },
       { path: 'Customer', name: 'Customer', component: () => import('@/views/main/Customer/index.vue') },
       { path: 'Order', name: 'Order', component: () => import('@/views/main/Order/index.vue') },

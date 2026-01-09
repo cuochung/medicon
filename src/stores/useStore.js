@@ -21,6 +21,13 @@ export const useStore = defineStore('company', () => {
     //功能名稱,樣式,key值,引用圖片,授權,icon圖片設定,
     authKeys: [
       {
+        label: "供應商管理", class: "ma-1 white--text", color: "primary", keyName: 'supplier',
+        image: new URL('@/assets/img/shopping_order_youshi.png', import.meta.url).href,
+        route: "/main/Supplier",
+        authKey: "supplier_key",
+        icon: 'mdi-store',
+      },
+      {
         label: "客戶管理", class: "ma-1 white--text", color: "primary", keyName: 'customer',
         image: new URL('@/assets/img/kankou_shopping_asia.png', import.meta.url).href,
         route: "/main/Customer",
