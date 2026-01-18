@@ -27,7 +27,33 @@
             <v-card-title class="card-title">篩選條件</v-card-title>
             <v-card-text>
               <v-row>
-                <v-col cols="12" md="4">
+                <v-col cols="12" md="3">
+                  <v-autocomplete v-model="filterCustomer" :items="customerOptions" item-title="customerFullName"
+                    item-value="snkey" label="客戶名稱" variant="outlined" density="comfortable"
+                    prepend-inner-icon="mdi-account" :custom-filter="customerFilter" clearable>
+                    <template v-slot:item="{ props, item }">
+                      <v-list-item v-bind="props" :key="item.raw.snkey">
+                        <template v-slot:prepend>
+                          <v-avatar color="primary" size="32">
+                            <v-icon>mdi-account</v-icon>
+                          </v-avatar>
+                        </template>
+                        <!-- <v-list-item-title>{{ item.raw.customerFullName }}</v-list-item-title> -->
+                        <v-list-item-subtitle>{{ item.raw.customerNumber }}</v-list-item-subtitle>
+                      </v-list-item>
+                    </template>
+                    <template v-slot:selection="{ item }">
+                      <span v-if="item.raw">
+                        {{ item.raw.customerFullName }} ({{ item.raw.customerNumber }})
+                      </span>
+                    </template>
+                  </v-autocomplete>
+                </v-col>
+                <v-col cols="12" md="3">
+                  <v-text-field v-model="filterDocumentNumber" label="訂單編號" variant="outlined" density="comfortable"
+                    prepend-inner-icon="mdi-file-document" clearable></v-text-field>
+                </v-col>
+                <v-col cols="12" md="3">
                   <v-menu
                     v-model="startDateMenu"
                     :close-on-content-click="false"
@@ -54,7 +80,7 @@
                     ></v-date-picker>
                   </v-menu>
                 </v-col>
-                <v-col cols="12" md="4">
+                <v-col cols="12" md="3">
                   <v-menu
                     v-model="endDateMenu"
                     :close-on-content-click="false"
@@ -81,48 +107,8 @@
                     ></v-date-picker>
                   </v-menu>
                 </v-col>
-                <v-col cols="12" md="4">
-                  <v-autocomplete
-                    v-model="filterCustomer"
-                    :items="customerOptions"
-                    item-title="customerFullName"
-                    item-value="snkey"
-                    label="客戶名稱"
-                    variant="outlined"
-                    density="comfortable"
-                    prepend-inner-icon="mdi-account"
-                    :custom-filter="customerFilter"
-                    clearable
-                  >
-                    <template v-slot:item="{ props, item }">
-                      <v-list-item v-bind="props" :key="item.raw.snkey">
-                        <template v-slot:prepend>
-                          <v-avatar color="primary" size="32">
-                            <v-icon>mdi-account</v-icon>
-                          </v-avatar>
-                        </template>
-                        <!-- <v-list-item-title>{{ item.raw.customerFullName }}</v-list-item-title> -->
-                        <v-list-item-subtitle>{{ item.raw.customerNumber }}</v-list-item-subtitle>
-                      </v-list-item>
-                    </template>
-                    <template v-slot:selection="{ item }">
-                      <span v-if="item.raw">
-                        {{ item.raw.customerFullName }} ({{ item.raw.customerNumber }})
-                      </span>
-                    </template>
-                  </v-autocomplete>
-                </v-col>
-                <v-col cols="12" md="4">
-                  <v-text-field
-                    v-model="filterDocumentNumber"
-                    label="訂單編號"
-                    variant="outlined"
-                    density="comfortable"
-                    prepend-inner-icon="mdi-file-document"
-                    clearable
-                  ></v-text-field>
-                </v-col>
-                <v-col cols="12" md="4" class="d-flex align-center">
+                
+                <v-col cols="12" md="3" class="d-flex align-center">
                   <v-btn
                     color="primary"
                     variant="elevated"
@@ -218,11 +204,40 @@
       <v-row class="mt-4" v-if="selectedOrders.length > 0">
         <v-col cols="12">
           <v-card class="preview-card" elevation="2">
-            <v-card-title class="card-title">扣款預覽</v-card-title>
+            <v-card-title class="card-title d-flex justify-space-between align-center">
+              <span>扣款預覽</span>
+              <div class="text-right">
+                <div class="d-flex align-center justify-end mb-1">
+                  <div class="text-caption text-grey-darken-1">目前總餘額</div>
+                  <v-icon 
+                    v-if="isTotalBalanceInsufficient" 
+                    color="error" 
+                    size="small" 
+                    class="ml-1"
+                  >
+                    mdi-alert-circle
+                  </v-icon>
+                </div>
+                <div 
+                  class="text-h5 font-weight-bold"
+                  :class="isTotalBalanceInsufficient ? 'text-error' : 'text-primary'"
+                >
+                  {{ formatCurrency(selectedTotalBalance) }}
+                </div>
+                <div 
+                  v-if="isTotalBalanceInsufficient" 
+                  class="text-caption text-error mt-1"
+                >
+                  餘額不足
+                </div>
+              </div>
+            </v-card-title>
             <v-card-text>
               <div class="mb-4">
                 <div class="text-h6 mb-2">選中訂單總數: {{ selectedOrders.length }} 筆</div>
                 <div class="text-h6 mb-2">總金額: {{ formatCurrency(selectedTotalAmount) }}</div>
+                <div class="text-h6 mb-2">總稅額: {{ formatCurrency(selectedTotalTaxAmount) }}</div>
+                <div class="text-h6 mb-2 text-primary font-weight-bold">扣款總額: {{ formatCurrency(selectedTotalDeductionAmount) }}</div>
               </div>
 
               <v-divider class="my-4"></v-divider>
@@ -237,7 +252,7 @@
                         <div class="text-caption">單據號碼: {{ order.documentNumber }}</div>
                       </div>
                       <div class="text-right">
-                        <div class="text-h6 text-primary">{{ formatCurrency(order.amount) }}</div>
+                        <div class="text-h6 text-primary">{{ formatCurrency(getOrderTotalAmount(order)) }}</div>
                       </div>
                     </div>
                     <v-divider class="my-2"></v-divider>
@@ -246,10 +261,18 @@
                       <span class="font-weight-bold">{{ formatCurrency(getCustomerBalance(order.customerNumber)) }}</span>
                     </div>
                     <div class="d-flex justify-space-between">
-                      <span>扣款金額:</span>
-                      <span class="font-weight-bold text-error">{{ formatCurrency(order.amount) }}</span>
+                      <span>金額:</span>
+                      <span class="font-weight-bold">{{ formatCurrency(order.amount || 0) }}</span>
                     </div>
-                    <v-divider class="my-2"></v-divider>
+                    <div class="d-flex justify-space-between">
+                      <span>稅額:</span>
+                      <span class="font-weight-bold">{{ formatCurrency(order.taxAmount || 0) }}</span>
+                    </div>
+                    <div class="d-flex justify-space-between">
+                      <span>扣款總額:</span>
+                      <span class="font-weight-bold text-error">{{ formatCurrency(getOrderTotalAmount(order)) }}</span>
+                    </div>
+                    <!-- <v-divider class="my-2"></v-divider>
                     <div class="d-flex justify-space-between">
                       <span class="text-h6">扣款後餘額:</span>
                       <span 
@@ -258,8 +281,8 @@
                       >
                         {{ formatCurrency(getNewBalance(order)) }}
                       </span>
-                    </div>
-                    <v-alert
+                    </div> -->
+                    <!-- <v-alert
                       v-if="getNewBalance(order) < 0"
                       type="error"
                       variant="tonal"
@@ -267,7 +290,7 @@
                       class="mt-2"
                     >
                       餘額不足，無法扣款
-                    </v-alert>
+                    </v-alert> -->
                   </v-card-text>
                 </v-card>
               </div>
@@ -302,10 +325,15 @@
         </v-col>
       </v-row>
     </v-container>
+
+    <!-- 浮動快速選單 - 使用 v-fab -->
+    <Link />
   </div>
 </template>
 
 <script setup>
+import Link from './link.vue'
+
 import { ref, computed, onMounted } from 'vue'
 import { getCurrentInstance } from 'vue'
 import { useStore } from '@/stores/useStore'
@@ -365,6 +393,13 @@ const customerFilter = (itemTitle, queryText, item) => {
   return customerName.includes(searchText) || customerNumber.includes(searchText)
 }
 
+// 取得訂單總額（金額+稅額）
+const getOrderTotalAmount = (order) => {
+  const amount = parseFloat(order.amount || 0)
+  const taxAmount = parseFloat(order.taxAmount || 0)
+  return amount + taxAmount
+}
+
 // 選中訂單總金額
 const selectedTotalAmount = computed(() => {
   return selectedOrders.value.reduce((sum, order) => {
@@ -372,15 +407,47 @@ const selectedTotalAmount = computed(() => {
   }, 0)
 })
 
+// 選中訂單總稅額
+const selectedTotalTaxAmount = computed(() => {
+  return selectedOrders.value.reduce((sum, order) => {
+    return sum + parseFloat(order.taxAmount || 0)
+  }, 0)
+})
+
+// 選中訂單扣款總額（金額+稅額）
+const selectedTotalDeductionAmount = computed(() => {
+  return selectedOrders.value.reduce((sum, order) => {
+    return sum + getOrderTotalAmount(order)
+  }, 0)
+})
+
+// 選中訂單的總餘額（去重客戶後加總）
+const selectedTotalBalance = computed(() => {
+  const customerBalances = new Map()
+  selectedOrders.value.forEach(order => {
+    const customerNumber = order.customerNumber
+    if (!customerBalances.has(customerNumber)) {
+      customerBalances.set(customerNumber, getCustomerBalance(customerNumber))
+    }
+  })
+  return Array.from(customerBalances.values()).reduce((sum, balance) => sum + balance, 0)
+})
+
 // 是否可以扣款
 const canDeduct = computed(() => {
   if (selectedOrders.value.length === 0) return false
   
-  // 檢查是否有餘額不足的訂單
+  // 檢查是否有餘額不足的訂單（需要檢查金額+稅額）
   return selectedOrders.value.every(order => {
     const balance = getCustomerBalance(order.customerNumber)
-    return balance >= parseFloat(order.amount || 0)
+    return balance >= getOrderTotalAmount(order)
   })
+})
+
+// 總餘額是否不足（總餘額 < 扣款總額）
+const isTotalBalanceInsufficient = computed(() => {
+  if (selectedOrders.value.length === 0) return false
+  return selectedTotalBalance.value < selectedTotalDeductionAmount.value
 })
 
 // 格式化貨幣
@@ -418,10 +485,10 @@ const getCustomerBalance = (customerNumber) => {
   return wallet ? parseFloat(wallet.balance || 0) : 0
 }
 
-// 計算新餘額
+// 計算新餘額（扣除金額+稅額）
 const getNewBalance = (order) => {
   const balance = getCustomerBalance(order.customerNumber)
-  return balance - parseFloat(order.amount || 0)
+  return balance - getOrderTotalAmount(order)
 }
 
 // 全選/取消全選
@@ -635,17 +702,18 @@ const submitDeduction = async () => {
     return
   }
 
-  // 檢查餘額
-  const insufficientOrders = selectedOrders.value.filter(order => {
-    const balance = getCustomerBalance(order.customerNumber)
-    return balance < parseFloat(order.amount || 0)
-  })
-
-  if (insufficientOrders.length > 0) {
+  // 檢查總餘額：如果扣款總額大於目前總餘額，不執行
+  if (selectedTotalDeductionAmount.value > selectedTotalBalance.value) {
     proxy.$swal({
       icon: "warning",
       title: "餘額不足",
-      text: `有 ${insufficientOrders.length} 筆訂單餘額不足，無法扣款`,
+      html: `
+        <div style="text-align: left; padding: 10px;">
+          <p><strong>目前總餘額:</strong> ${formatCurrency(selectedTotalBalance.value)}</p>
+          <p><strong>扣款總額:</strong> ${formatCurrency(selectedTotalDeductionAmount.value)}</p>
+          <p class="text-error mt-2">扣款總額大於目前總餘額，無法執行扣款</p>
+        </div>
+      `,
       confirmButtonText: '確定'
     })
     return
@@ -658,6 +726,8 @@ const submitDeduction = async () => {
       <div style="text-align: left; padding: 10px;">
         <p><strong>選中訂單數:</strong> ${selectedOrders.value.length} 筆</p>
         <p><strong>總金額:</strong> ${formatCurrency(selectedTotalAmount.value)}</p>
+        <p><strong>總稅額:</strong> ${formatCurrency(selectedTotalTaxAmount.value)}</p>
+        <p><strong>扣款總額:</strong> ${formatCurrency(selectedTotalDeductionAmount.value)}</p>
       </div>
     `,
     icon: 'question',
@@ -751,25 +821,28 @@ const submitDeduction = async () => {
           }
 
           const amount = parseFloat(order.amount || 0)
+          const taxAmount = parseFloat(order.taxAmount || 0)
+          const totalAmount = amount + taxAmount
           const balanceBefore = parseFloat(wallet.balance || 0)
           
-          if (balanceBefore < amount) {
+          if (balanceBefore < totalAmount) {
             results.failed.push({ order, reason: '餘額不足' })
             continue
           }
 
-          const balanceAfter = balanceBefore - amount
+          const balanceAfter = balanceBefore - totalAmount
 
           // 更新儲值記錄
           wallet.balance = balanceAfter
-          wallet.totalDeduction = (parseFloat(wallet.totalDeduction || 0) + amount)
+          // 累計扣款使用含稅總額（金額+稅額）
+          wallet.totalDeduction = (parseFloat(wallet.totalDeduction || 0) + totalAmount)
           wallet.lastTransactionDate = now
           wallet.editInfo = wallet.editInfo || []
-          wallet.editInfo.push({
-            snkey: store.state.pData.snkey,
-            name: store.state.pData.username,
-            time: now
-          })
+          // wallet.editInfo.push({
+          //   snkey: store.state.pData.snkey,
+          //   name: store.state.pData.username,
+          //   time: now
+          // })
 
           const updateData = {
             snkey: wallet.snkey,
@@ -783,7 +856,9 @@ const submitDeduction = async () => {
             const transactionData = {
               customerNumber: customerNumber,
               transactionType: 'deduction',
-              amount: -amount,
+              amount: -totalAmount,
+              orderAmount: amount,
+              taxAmount: taxAmount,
               balanceBefore: balanceBefore,
               balanceAfter: balanceAfter,
               orderNumber: null,
@@ -794,7 +869,7 @@ const submitDeduction = async () => {
                 name: store.state.pData.username,
                 time: now
               },
-              notes: `訂單扣款: ${order.documentNumber}`
+              notes: `訂單扣款: ${order.documentNumber} (金額: ${formatCurrency(amount)}, 稅額: ${formatCurrency(taxAmount)})`
             }
 
             const transactionPostData = {

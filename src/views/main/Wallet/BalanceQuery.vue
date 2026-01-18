@@ -22,7 +22,7 @@
 
       <!-- 查詢條件 -->
       <v-row class="mt-4">
-        <v-col cols="12" md="8" offset-md="2">
+        <v-col cols="12">
           <v-card class="query-card" elevation="2">
             <v-card-title class="card-title">查詢條件</v-card-title>
             <v-card-text>
@@ -37,7 +37,7 @@
                 prepend-inner-icon="mdi-account"
                 :custom-filter="customerFilter"
                 @update:model-value="onCustomerSelected"
-                class="mb-4"
+                class="my-4"
               >
                 <template v-slot:item="{ props, item }">
                   <v-list-item v-bind="props" :key="item.raw.snkey">
@@ -69,7 +69,7 @@
 
       <!-- 餘額資訊 -->
       <v-row class="mt-4" v-if="walletInfo">
-        <v-col cols="12" md="8" offset-md="2">
+        <v-col cols="12">
           <v-card class="balance-card" elevation="2">
             <v-card-title class="card-title">餘額資訊</v-card-title>
             <v-card-text>
@@ -128,6 +128,27 @@
                 </v-card-text>
               </v-card>
 
+              <!-- 餘額不足提示 -->
+              <v-alert
+                v-if="isBalanceInsufficient"
+                type="warning"
+                variant="tonal"
+                prominent
+                border="start"
+                class="mb-4"
+              >
+                <template v-slot:prepend>
+                  <v-icon>mdi-alert</v-icon>
+                </template>
+                <div class="text-h6 mb-2">餘額不足警告</div>
+                <div class="text-body-2">
+                  <p class="mb-1"><strong>累計儲值：</strong>{{ formatCurrency(walletInfo.totalRecharge || 0) }}</p>
+                  <p class="mb-1"><strong>累計扣款：</strong>{{ formatCurrency(walletInfo.totalDeduction || 0) }}</p>
+                  <p class="mb-1"><strong>目前餘額：</strong>{{ formatCurrency(walletInfo.balance) }}</p>
+                  <p class="text-error mt-2 mb-0">儲值總計小於扣款總計，請注意餘額狀況。</p>
+                </div>
+              </v-alert>
+
               <!-- 最近交易記錄 -->
               <v-card variant="outlined" class="mt-4">
                 <v-card-title class="text-subtitle-1">最近交易記錄 (最近 10 筆)</v-card-title>
@@ -137,7 +158,7 @@
                       <tr>
                         <th class="text-left">交易日期</th>
                         <th class="text-left">交易類型</th>
-                        <th class="text-left">交易金額</th>
+                        <th class="text-left">交易金額(含稅額)</th>
                         <th class="text-left">交易後餘額</th>
                         <th class="text-left">備註</th>
                       </tr>
@@ -160,9 +181,10 @@
                         >
                           {{ transaction.transactionType === 'recharge' ? '+' : '' }}{{ formatCurrency(Math.abs(transaction.amount)) }}
                         </td>
+                        
                         <td>{{ formatCurrency(transaction.balanceAfter) }}</td>
                         <td>
-                          <div class="text-truncate" style="max-width: 200px" :title="transaction.notes">
+                          <div class="text-truncate" style="max-width: 500px" :title="transaction.notes">
                             {{ transaction.notes || '-' }}
                           </div>
                         </td>
@@ -181,7 +203,7 @@
 
       <!-- 無記錄提示 -->
       <v-row v-if="!loading && !walletInfo && hasSearched">
-        <v-col cols="12" md="8" offset-md="2">
+        <v-col cols="12">
           <v-card>
             <v-card-text class="text-center py-8">
               <v-icon size="64" color="grey">mdi-information-outline</v-icon>
@@ -192,10 +214,15 @@
         </v-col>
       </v-row>
     </v-container>
+
+    <!-- 浮動快速選單 - 使用 v-fab -->
+    <Link />
   </div>
 </template>
 
 <script setup>
+import Link from './link.vue'
+
 import { ref, computed, onMounted } from 'vue'
 import { getCurrentInstance } from 'vue'
 import { useStore } from '@/stores/useStore'
@@ -214,6 +241,7 @@ const customerInfo = ref(null)
 const walletInfo = ref(null)
 const transactions = ref([])
 const recentTransactions = ref([])
+const orders = ref([])
 
 // 客戶選項
 const customerOptions = computed(() => {
@@ -222,6 +250,42 @@ const customerOptions = computed(() => {
     customerNumber: c.customerNumber,
     customerFullName: c.customerFullName
   }))
+})
+
+// 計算扣款總額（包含稅額）- 從所有交易記錄計算
+const totalDeductionWithTax = computed(() => {
+  if (!transactions.value || transactions.value.length === 0) {
+    return 0
+  }
+  
+  // 取得該客戶的所有扣款交易記錄
+  const customerDeductionTransactions = transactions.value
+    .filter(t => t.customerNumber === customerInfo.value?.customerNumber && t.transactionType === 'deduction')
+    .map(t => {
+      // 通過 documentNumber 關聯訂單，獲取稅額資訊
+      if (t.documentNumber && orders.value.length > 0) {
+        const relatedOrder = orders.value.find(o => o.documentNumber === t.documentNumber)
+        if (relatedOrder) {
+          t.taxAmount = relatedOrder.taxAmount || 0
+        }
+      }
+      return t
+    })
+  
+  return customerDeductionTransactions.reduce((sum, transaction) => {
+    const amount = Math.abs(parseFloat(transaction.amount) || 0)
+    const taxAmount = parseFloat(transaction.taxAmount) || 0
+    return sum + amount + taxAmount
+  }, 0)
+})
+
+// 檢查儲值總計是否小於扣款總計（餘額不足警告）
+const isBalanceInsufficient = computed(() => {
+  if (!walletInfo.value) return false
+  const totalRecharge = parseFloat(walletInfo.value.totalRecharge) || 0
+  const totalDeduction = parseFloat(walletInfo.value.totalDeduction) || 0
+  // 當儲值總計 - 扣款總計 < 0 時才警告
+  return totalRecharge - totalDeduction < 0
 })
 
 // 格式化貨幣
@@ -310,6 +374,17 @@ const queryBalance = async () => {
       walletInfo.value = null
     }
 
+    // 載入訂單資料（用於獲取稅額資訊）
+    const orderRs = await api.get('orderdata')
+    if (orderRs && orderRs.length > 0) {
+      orders.value = orderRs.map((i) => ({
+        ...JSON.parse(i.datalist),
+        snkey: i.snkey,
+      }))
+    } else {
+      orders.value = []
+    }
+
     // 載入交易記錄
     const transactionRs = await api.get('wallet_transactions')
     if (transactionRs && transactionRs.length > 0) {
@@ -321,6 +396,16 @@ const queryBalance = async () => {
       // 取得該客戶的交易記錄，按日期倒序
       const customerTransactions = transactions.value
         .filter(t => t.customerNumber === customerInfo.value?.customerNumber)
+        .map(t => {
+          // 通過 documentNumber 關聯訂單，獲取稅額資訊
+          if (t.documentNumber) {
+            const relatedOrder = orders.value.find(o => o.documentNumber === t.documentNumber)
+            if (relatedOrder) {
+              t.taxAmount = relatedOrder.taxAmount || 0
+            }
+          }
+          return t
+        })
         .sort((a, b) => {
           const dateA = dayjs(a.transactionDate)
           const dateB = dayjs(b.transactionDate)

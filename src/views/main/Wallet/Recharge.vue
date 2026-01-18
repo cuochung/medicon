@@ -163,17 +163,24 @@
         </v-col>
       </v-row>
     </v-container>
+
+    <!-- 浮動快速選單 - 使用 v-fab -->
+    <Link />
   </div>
 </template>
 
 <script setup>
+import Link from './link.vue'
+
 import { ref, computed, onMounted } from 'vue'
 import { getCurrentInstance } from 'vue'
+import { useRouter } from 'vue-router'
 import { useStore } from '@/stores/useStore'
 import api from '@/assets/js/api.js'
 import dayjs from 'dayjs'
 
 const { proxy } = getCurrentInstance()
+const router = useRouter()
 const store = useStore()
 
 // 表單引用
@@ -187,6 +194,41 @@ const walletInfo = ref(null)
 const rechargeAmount = ref(0)
 const notes = ref('')
 const loading = ref(false)
+const showMenu = ref(false)
+
+// 快速選單項目
+const menuItems = ref([
+  {
+    title: '會員儲值',
+    icon: 'mdi-wallet-plus',
+    color: 'primary',
+    route: '/main/Wallet/Recharge'
+  },
+  {
+    title: '訂單扣款',
+    icon: 'mdi-cash-minus',
+    color: 'error',
+    route: '/main/Wallet/Deduction'
+  },
+  {
+    title: '交易記錄',
+    icon: 'mdi-history',
+    color: 'success',
+    route: '/main/Wallet/TransactionHistory'
+  },
+  {
+    title: '餘額查詢',
+    icon: 'mdi-account-cash',
+    color: 'warning',
+    route: '/main/Wallet/BalanceQuery'
+  },
+  {
+    title: '訂單查詢',
+    icon: 'mdi-file-search',
+    color: 'info',
+    route: '/main/Wallet/OrderQuery'
+  }
+])
 
 // 客戶選項
 const customerOptions = computed(() => {
@@ -469,6 +511,16 @@ const resetForm = () => {
   formRef.value?.resetValidation()
 }
 
+// 導航到選單頁面
+const navigateToMenu = (route) => {
+  if (route === '/main/Wallet/Recharge') {
+    // 如果點擊的是當前頁面，只關閉選單
+    showMenu.value = false
+    return
+  }
+  router.push(route)
+}
+
 // 生命週期
 onMounted(async () => {
   await loadCustomers()
@@ -511,4 +563,5 @@ onMounted(async () => {
   padding: 20px 24px;
   border-bottom: 1px solid rgba(91, 143, 163, 0.16);
 }
+
 </style>

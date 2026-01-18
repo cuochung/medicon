@@ -1,17 +1,24 @@
 {
-    "documentNumber": "SO20251103001",
-    "customerFullName": "從頭開始",
-    "productName": "賦活金萃奇蹟面膜",
-    "unitPrice": "25",
-    "quantity": "986",
-    "amount": "23476",
-    "taxAmount": "1174",
-    "orderDate": "2025/11/03",
-    "customerNumber": "MD02066",
+    "customerNumber": "MD03004",
+    "balance": 50000,
+    "totalRecharge": 57800,
+    "totalDeduction": 7800,
+    "lastTransactionDate": "2026-01-17 19:30:36",
     "createInfo": {
         "snkey": "34",
         "name": "系統管理員",
-        "time": "2025-11-18 14:24:43"
+        "time": "2026-01-17 19:28:28"
     },
-    "editInfo": []
+    "editInfo": [
+        {
+            "snkey": "34",
+            "name": "系統管理員",
+            "time": "2026-01-17 19:28:28"
+        },
+        {
+            "snkey": "34",
+            "name": "系統管理員",
+            "time": "2026-01-17 19:30:36"
+        }
+    ]
 }

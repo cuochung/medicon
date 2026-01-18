@@ -190,6 +190,15 @@
           <v-card class="transactions-card" elevation="2">
             <v-card-title class="d-flex justify-space-between align-center">
               <span>交易記錄 (共 {{ filteredTransactions.length }} 筆)</span>
+              <v-btn
+                color="primary"
+                variant="elevated"
+                prepend-icon="mdi-printer"
+                @click="exportTransactions"
+                :disabled="filteredTransactions.length === 0"
+              >
+                輸出交易記錄
+              </v-btn>
             </v-card-title>
             <v-card-text>
               <PaginatedIterator 
@@ -206,7 +215,7 @@
                         <th class="text-left">客戶編號</th>
                         <th class="text-left">客戶名稱</th>
                         <th class="text-left">交易類型</th>
-                        <th class="text-left">交易金額</th>
+                        <th class="text-left">交易金額(含稅額)</th>
                         <th class="text-left">交易前餘額</th>
                         <th class="text-left">交易後餘額</th>
                         <th class="text-left">訂單編號</th>
@@ -238,7 +247,7 @@
                         <td>{{ formatCurrency(transaction.raw.balanceAfter) }}</td>
                         <td>{{ transaction.raw.documentNumber || '-' }}</td>
                         <td>
-                          <div class="text-truncate" style="max-width: 200px" :title="transaction.raw.notes">
+                          <div class="text-truncate" style="max-width: 500px" :title="transaction.raw.notes">
                             {{ transaction.raw.notes || '-' }}
                           </div>
                         </td>
@@ -272,10 +281,25 @@
         </v-col>
       </v-row>
     </v-container>
+
+    <!-- 浮動快速選單 - 使用 v-fab -->
+    <Link />
+
+    <!-- 交易記錄輸出組件 -->
+    <PrintTransactionHistory
+      ref="printTransactionHistoryRef"
+      :transactions="filteredTransactions"
+      :customer-data="selectedCustomerData"
+      :stats="transactionStats"
+      :customers="customers"
+    />
   </div>
 </template>
 
 <script setup>
+import Link from './link.vue'
+import PrintTransactionHistory from './PrintTransactionHistory.vue'
+
 import { ref, computed, onMounted } from 'vue'
 import { getCurrentInstance } from 'vue'
 import { useStore } from '@/stores/useStore'
@@ -299,6 +323,7 @@ const hasSearched = ref(false)
 const customers = ref([])
 const transactions = ref([])
 const filteredTransactions = ref([])
+const printTransactionHistoryRef = ref(null)
 
 // 分頁相關
 const currentPage = ref(1)
@@ -507,6 +532,34 @@ const resetFilter = () => {
   filterDocumentNumber.value = ''
   filteredTransactions.value = []
   hasSearched.value = false
+}
+
+// 計算選中的客戶資料
+const selectedCustomerData = computed(() => {
+  if (!filterCustomer.value) return null
+  return customers.value.find(c => c.snkey === filterCustomer.value) || null
+})
+
+// 計算交易統計數據
+const transactionStats = computed(() => ({
+  filterTransactionType: filterTransactionType.value,
+  filterStartDate: filterStartDate.value,
+  filterEndDate: filterEndDate.value,
+  totalRecharge: totalRecharge.value,
+  totalDeduction: totalDeduction.value,
+  totalCount: filteredTransactions.value.length
+}))
+
+// 輸出交易記錄
+const exportTransactions = () => {
+  if (filteredTransactions.value.length === 0) {
+    return
+  }
+
+  // 調用組件的輸出方法
+  if (printTransactionHistoryRef.value) {
+    printTransactionHistoryRef.value.exportTransactions()
+  }
 }
 
 // 生命週期

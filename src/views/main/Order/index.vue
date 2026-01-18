@@ -29,25 +29,39 @@
       </v-row>
 
       <v-row class="summary-row" dense>
-        <v-col cols="12" sm="6" md="4">
+        <v-col cols="12" sm="6" md="2">
           <v-card class="summary-card" variant="tonal" color="primary">
             <div class="summary-card__title">訂單總數</div>
             <div class="summary-card__value">{{ totalCount }}</div>
             <div class="summary-card__caption">目前已建立的訂單數量</div>
           </v-card>
         </v-col>
-        <v-col cols="12" sm="6" md="4">
+        <v-col cols="12" sm="6" md="2">
           <v-card class="summary-card" variant="tonal" color="secondary">
             <div class="summary-card__title">總數量</div>
             <div class="summary-card__value">{{ totalQuantity }}</div>
             <div class="summary-card__caption">所有訂單的總數量</div>
           </v-card>
         </v-col>
-        <v-col cols="12" md="4">
+        <v-col cols="12" sm="6" md="2">
           <v-card class="summary-card" variant="tonal" color="info">
             <div class="summary-card__title">總金額</div>
             <div class="summary-card__value">{{ totalAmount }}</div>
             <div class="summary-card__caption">所有訂單的總金額</div>
+          </v-card>
+        </v-col>
+        <v-col cols="12" sm="6" md="2">
+          <v-card class="summary-card" variant="tonal" color="warning">
+            <div class="summary-card__title">總稅額</div>
+            <div class="summary-card__value">{{ totalTaxAmount }}</div>
+            <div class="summary-card__caption">所有訂單的總稅額</div>
+          </v-card>
+        </v-col>
+        <v-col cols="12" sm="6" md="4">
+          <v-card class="summary-card" variant="tonal" color="success">
+            <div class="summary-card__title">含稅總金額</div>
+            <div class="summary-card__value">{{ totalAmountWithTax }}</div>
+            <div class="summary-card__caption">所有訂單的含稅總金額</div>
           </v-card>
         </v-col>
       </v-row>
@@ -192,18 +206,35 @@ const authKeys = computed(() => {
   return store.state.authKeys.filter((i) => i.authKey != "exit_key")
 })
 
-const totalCount = computed(() => items.value.length)
+const totalCount = computed(() => searchfilter.value.length)
 const totalQuantity = computed(() => {
-  return items.value.reduce((sum, item) => {
+  return searchfilter.value.reduce((sum, item) => {
     const quantity = parseFloat(item?.quantity) || 0
     return sum + quantity
   }, 0)
 })
 const totalAmount = computed(() => {
-  return items.value.reduce((sum, item) => {
+  return searchfilter.value.reduce((sum, item) => {
     const amount = parseFloat(item?.amount) || 0
     return sum + amount
   }, 0).toLocaleString('zh-TW')
+})
+const totalTaxAmount = computed(() => {
+  return searchfilter.value.reduce((sum, item) => {
+    const taxAmount = parseFloat(item?.taxAmount) || 0
+    return sum + taxAmount
+  }, 0).toLocaleString('zh-TW')
+})
+const totalAmountWithTax = computed(() => {
+  const amount = searchfilter.value.reduce((sum, item) => {
+    const itemAmount = parseFloat(item?.amount) || 0
+    return sum + itemAmount
+  }, 0)
+  const tax = searchfilter.value.reduce((sum, item) => {
+    const itemTax = parseFloat(item?.taxAmount) || 0
+    return sum + itemTax
+  }, 0)
+  return (amount + tax).toLocaleString('zh-TW')
 })
 
 const searchfilter = computed(() => {

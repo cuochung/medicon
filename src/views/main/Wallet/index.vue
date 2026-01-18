@@ -113,6 +113,15 @@ const functionItems = ref([
     buttonText: '前往儲值'
   },
   {
+    title: '訂單扣款',
+    subtitle: '手動選擇訂單進行扣款',
+    icon: 'mdi-cash-minus',
+    color: 'error',
+    route: '/main/Wallet/Deduction',
+    buttonText: '前往扣款'
+  },
+  
+  {
     title: '交易記錄',
     subtitle: '查詢儲值與扣款記錄',
     icon: 'mdi-history',
@@ -129,14 +138,7 @@ const functionItems = ref([
     buttonText: '查詢餘額'
   },
 
-  {
-    title: '訂單扣款',
-    subtitle: '手動選擇訂單進行扣款',
-    icon: 'mdi-cash-minus',
-    color: 'error',
-    route: '/main/Wallet/Deduction',
-    buttonText: '前往扣款'
-  },
+  
   {
     title: '訂單查詢',
     subtitle: '查詢所有訂單及扣款狀態',

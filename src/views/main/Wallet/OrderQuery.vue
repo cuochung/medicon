@@ -27,7 +27,33 @@
             <v-card-title class="card-title">查詢條件</v-card-title>
             <v-card-text>
               <v-row>
-                <v-col cols="12" md="4">
+                <v-col cols="12" md="3">
+                  <v-autocomplete v-model="filterCustomer" :items="customerOptions" item-title="customerFullName"
+                    item-value="snkey" label="客戶名稱" variant="outlined" density="comfortable"
+                    prepend-inner-icon="mdi-account" :custom-filter="customerFilter" clearable>
+                    <template v-slot:item="{ props, item }">
+                      <v-list-item v-bind="props" :key="item.raw.snkey">
+                        <template v-slot:prepend>
+                          <v-avatar color="primary" size="32">
+                            <v-icon>mdi-account</v-icon>
+                          </v-avatar>
+                        </template>
+                        <!-- <v-list-item-title>{{ item.raw.customerFullName }}</v-list-item-title> -->
+                        <v-list-item-subtitle>{{ item.raw.customerNumber }}</v-list-item-subtitle>
+                      </v-list-item>
+                    </template>
+                    <template v-slot:selection="{ item }">
+                      <span v-if="item.raw">
+                        {{ item.raw.customerFullName }} ({{ item.raw.customerNumber }})
+                      </span>
+                    </template>
+                  </v-autocomplete>
+                </v-col>
+                <v-col cols="12" md="3">
+                  <v-text-field v-model="filterDocumentNumber" label="訂單編號" variant="outlined" density="comfortable"
+                    prepend-inner-icon="mdi-file-document" clearable></v-text-field>
+                </v-col>
+                <v-col cols="12" md="3">
                   <v-menu
                     v-model="startDateMenu"
                     :close-on-content-click="false"
@@ -54,7 +80,7 @@
                     ></v-date-picker>
                   </v-menu>
                 </v-col>
-                <v-col cols="12" md="4">
+                <v-col cols="12" md="3">
                   <v-menu
                     v-model="endDateMenu"
                     :close-on-content-click="false"
@@ -81,47 +107,7 @@
                     ></v-date-picker>
                   </v-menu>
                 </v-col>
-                <v-col cols="12" md="4">
-                  <v-autocomplete
-                    v-model="filterCustomer"
-                    :items="customerOptions"
-                    item-title="customerFullName"
-                    item-value="snkey"
-                    label="客戶名稱"
-                    variant="outlined"
-                    density="comfortable"
-                    prepend-inner-icon="mdi-account"
-                    :custom-filter="customerFilter"
-                    clearable
-                  >
-                    <template v-slot:item="{ props, item }">
-                      <v-list-item v-bind="props" :key="item.raw.snkey">
-                        <template v-slot:prepend>
-                          <v-avatar color="primary" size="32">
-                            <v-icon>mdi-account</v-icon>
-                          </v-avatar>
-                        </template>
-                        <!-- <v-list-item-title>{{ item.raw.customerFullName }}</v-list-item-title> -->
-                        <v-list-item-subtitle>{{ item.raw.customerNumber }}</v-list-item-subtitle>
-                      </v-list-item>
-                    </template>
-                    <template v-slot:selection="{ item }">
-                      <span v-if="item.raw">
-                        {{ item.raw.customerFullName }} ({{ item.raw.customerNumber }})
-                      </span>
-                    </template>
-                  </v-autocomplete>
-                </v-col>
-                <v-col cols="12" md="4">
-                  <v-text-field
-                    v-model="filterDocumentNumber"
-                    label="訂單編號"
-                    variant="outlined"
-                    density="comfortable"
-                    prepend-inner-icon="mdi-file-document"
-                    clearable
-                  ></v-text-field>
-                </v-col>
+                
                 <v-col cols="12" md="4" class="d-flex align-center">
                   <v-btn
                     color="primary"
@@ -233,10 +219,15 @@
         </v-col>
       </v-row>
     </v-container>
+
+    <!-- 浮動快速選單 - 使用 v-fab -->
+    <Link />
   </div>
 </template>
 
 <script setup>
+import Link from './link.vue'
+
 import { ref, computed, onMounted } from 'vue'
 import { getCurrentInstance } from 'vue'
 import { useStore } from '@/stores/useStore'
