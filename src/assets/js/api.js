@@ -202,7 +202,6 @@ var api = {
   },
 
   //新增多筆資料
-  //addMulti data
   async addMulti(database, data) {
     // console.log('run addMulti')
     try {
@@ -212,6 +211,26 @@ var api = {
       console.log('err', err)
     }
 
+  },
+  //修改多筆資料
+  async editMulti(database, data) {
+    // console.log('run editMulti')
+    try {
+      const get = await instance.post(`general/editMulti/${store.state.databaseName}/${database}`, qs.stringify(data))
+      return get.data;
+    } catch (err) {
+      console.log('err', err)
+    }
+  },
+  //刪除多筆資料
+  async deleteMulti(database, data) {
+    // console.log('run deleteMulti')
+    try {
+      const get = await instance.post(`general/delMultiv3/${store.state.databaseName}/${database}`, qs.stringify(data))
+      return get.data;
+    } catch (err) {
+      console.log('err', err)
+    }
   },
 }
 

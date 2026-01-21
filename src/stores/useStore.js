@@ -3,10 +3,10 @@ import { defineStore } from 'pinia'
 
 export const useStore = defineStore('company', () => {
   const state = {
-    verMsg: "2025.12.18.1",
+    verMsg: "2026.1.18.1",
     databaseName: "medicon", //資料庫名
-    // base_url: "http://localhost/mediconapi", //localhost測試用
-    base_url: "https://www.pddtvgame.com/mediconapi", //線上專用指定去讀圖片或其他東西的位置
+    base_url: "http://localhost/mediconapi", //localhost測試用
+    // base_url: "https://www.pddtvgame.com/mediconapi", //線上專用指定去讀圖片或其他東西的位置
     // base_url: "https://www.pddtech.online/mediconapi", //線上專用指定去讀圖片或其他東西的位置
 
     loading: false, //載入中
@@ -20,6 +20,13 @@ export const useStore = defineStore('company', () => {
 
     //功能名稱,樣式,key值,引用圖片,授權,icon圖片設定,
     authKeys: [
+      {
+        label: "原料管理", class: "ma-1 white--text", color: "primary", keyName: 'RawMaterial',
+        image: new URL('@/assets/img/job_chinretsu_man.png', import.meta.url).href,
+        route: "/main/RawMaterial",
+        authKey: "ingredient_key",
+        icon: 'mdi-bottle-tonic-outline',
+      },
       {
         label: "供應商管理", class: "ma-1 white--text", color: "primary", keyName: 'supplier',
         image: new URL('@/assets/img/shopping_order_youshi.png', import.meta.url).href,

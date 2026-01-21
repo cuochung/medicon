@@ -1,24 +1,36 @@
 {
-    "customerNumber": "MD03004",
-    "balance": 50000,
-    "totalRecharge": 57800,
-    "totalDeduction": 7800,
-    "lastTransactionDate": "2026-01-17 19:30:36",
+    "snkey": "1",
+    "itemNumber": "",
+    "category": "保濕劑",
+    "materialNumber": "SC30001",
+    "productName": "1,3-Butylene Glycol",
+    "materialName": "1.3-BG",
+    "inciName": "Butylene Glycol",
+    "chineseName": "丁二醇",
+    "efficacy": "(報送碼=001946-02820-4598)",
+    "supplier": "亨元",
+    "brand": "KH NeoChem",
+    "moq": "200",
+    "unitPrice": "148",
+    "casNumber": "107-88-0",
+    "ph": "",
     "createInfo": {
         "snkey": "34",
         "name": "系統管理員",
-        "time": "2026-01-17 19:28:28"
+        "time": "2026-01-21 13:33:08"
     },
     "editInfo": [
         {
             "snkey": "34",
             "name": "系統管理員",
-            "time": "2026-01-17 19:28:28"
-        },
+            "time": "2026-01-21 15:14:32"
+        }
+    ],
+    "compositions": [
         {
-            "snkey": "34",
-            "name": "系統管理員",
-            "time": "2026-01-17 19:30:36"
+            "itemNumber": "1",
+            "composition": "Butylene Glycol",
+            "wtPercent": "1"
         }
     ]
 }

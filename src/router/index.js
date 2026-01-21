@@ -22,6 +22,7 @@ const routes = [
       { path: 'Personnel', name: 'Personnel', component: () => import('@/views/main/Personnel/index.vue') },
       { path: 'Customer', name: 'Customer', component: () => import('@/views/main/Customer/index.vue') },
       { path: 'Order', name: 'Order', component: () => import('@/views/main/Order/index.vue') },
+      { path: 'RawMaterial', name: 'RawMaterial', component: () => import('@/views/main/RawMaterial/index.vue') },
       { path: 'Wallet', name: 'Wallet', component: () => import('@/views/main/Wallet/index.vue') },
       { path: 'Wallet/Recharge', name: 'WalletRecharge', component: () => import('@/views/main/Wallet/Recharge.vue') },
       { path: 'Wallet/Deduction', name: 'WalletDeduction', component: () => import('@/views/main/Wallet/Deduction.vue') },
