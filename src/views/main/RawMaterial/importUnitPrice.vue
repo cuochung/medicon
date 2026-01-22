@@ -1,23 +1,23 @@
 <template>
-  <div class="import-cost-composition">
+  <div class="import-unit-price">
     <v-dialog v-model="dialog" max-width="1200" persistent>
       <template #activator="{ props }">
         <v-btn 
           v-bind="props" 
-          color="success" 
+          color="info" 
           variant="elevated"
           prepend-icon="mdi-file-excel"
           rounded="pill"
           elevation="6"
           @click="openDialog"
         >
-          匯入成分組成
+          匯入原料單價
         </v-btn>
       </template>
 
       <v-card class="import-dialog" rounded="xl">
         <v-card-title class="d-flex dialog-title dialog-title--import" primary-title>
-          <div class="text-h6 font-weight-bold">匯入成分組成 Excel</div>
+          <div class="text-h6 font-weight-bold">匯入原料單價 Excel</div>
           <v-spacer></v-spacer>
           <v-btn 
             icon="mdi-close" 
@@ -37,7 +37,7 @@
             
             <v-file-input
               v-model="selectedFile"
-              label="選擇成本組成 Excel 檔案"
+              label="選擇原料單價 Excel 檔案"
               accept=".xlsx,.xls"
               prepend-icon="mdi-file-excel"
               variant="outlined"
@@ -55,6 +55,17 @@
               <div class="d-flex align-center">
                 <v-icon class="mr-2">mdi-file-check</v-icon>
                 <span>已選擇檔案: {{ selectedFileName }}</span>
+              </div>
+            </v-alert>
+
+            <v-alert
+              type="info"
+              variant="tonal"
+              density="compact"
+              class="mt-4"
+            >
+              <div class="text-caption">
+                <strong>提示：</strong>建議使用含有「工作表5」(或 Sheet5) 的 Excel 檔案，並確保包含 ProdID 和 StdPrice 欄位。
               </div>
             </v-alert>
           </v-sheet>
@@ -75,24 +86,24 @@
             <v-row dense>
               <v-col cols="6" md="3">
                 <div class="stat-item">
-                  <div class="stat-label">總原料數</div>
+                  <div class="stat-label">總筆數</div>
                   <div class="stat-value">{{ statistics.total }}</div>
                 </div>
               </v-col>
               <v-col cols="6" md="3">
-                <v-tooltip location="top" :disabled="statistics.existing === 0">
+                <v-tooltip location="top" :disabled="statistics.canUpdate === 0">
                   <template v-slot:activator="{ props }">
-                    <div v-bind="props" class="stat-item stat-item--success" :style="statistics.existing > 0 ? 'cursor: help;' : ''">
-                      <div class="stat-label">存在於資料庫</div>
-                      <div class="stat-value">{{ statistics.existing }}</div>
+                    <div v-bind="props" class="stat-item stat-item--success" :style="statistics.canUpdate > 0 ? 'cursor: help;' : ''">
+                      <div class="stat-label">可更新</div>
+                      <div class="stat-value">{{ statistics.canUpdate }}</div>
                     </div>
                   </template>
                   <div style="max-width: 400px;">
-                    <div style="font-weight: bold; margin-bottom: 8px;">存在的原料料號：</div>
+                    <div style="font-weight: bold; margin-bottom: 8px;">可更新的原料料號：</div>
                     <div style="max-height: 300px; overflow-y: auto;">
-                      <div v-for="result in comparisonResults.filter(r => r.exists)" :key="result.materialNumber" style="margin-bottom: 4px;">
+                      <div v-for="result in comparisonResults.filter(r => r.canUpdate)" :key="result.prodId" style="margin-bottom: 4px;">
                         <span style="font-family: monospace; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 3px;">
-                          {{ result.materialNumber }}
+                          {{ result.prodId }}
                         </span>
                         <span style="margin-left: 8px; opacity: 0.9;">{{ result.materialName }}</span>
                       </div>
@@ -104,28 +115,42 @@
                 <v-tooltip location="top" :disabled="statistics.notFound === 0">
                   <template v-slot:activator="{ props }">
                     <div v-bind="props" class="stat-item stat-item--error" :style="statistics.notFound > 0 ? 'cursor: help;' : ''">
-                      <div class="stat-label">不存在於資料庫</div>
+                      <div class="stat-label">料號不存在</div>
                       <div class="stat-value">{{ statistics.notFound }}</div>
                     </div>
                   </template>
                   <div style="max-width: 400px;">
                     <div style="font-weight: bold; margin-bottom: 8px;">不存在的原料料號：</div>
                     <div style="max-height: 300px; overflow-y: auto;">
-                      <div v-for="result in comparisonResults.filter(r => !r.exists)" :key="result.materialNumber" style="margin-bottom: 4px;">
+                      <div v-for="result in comparisonResults.filter(r => !r.exists)" :key="result.prodId" style="margin-bottom: 4px;">
                         <span style="font-family: monospace; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 3px;">
-                          {{ result.materialNumber }}
+                          {{ result.prodId }}
                         </span>
-                        <span style="margin-left: 8px; opacity: 0.9;">{{ result.materialName }}</span>
                       </div>
                     </div>
                   </div>
                 </v-tooltip>
               </v-col>
               <v-col cols="6" md="3">
-                <div class="stat-item stat-item--info">
-                  <div class="stat-label">總 Composition 數</div>
-                  <div class="stat-value">{{ statistics.totalCompositions }}</div>
-                </div>
+                <v-tooltip location="top" :disabled="statistics.noPrice === 0">
+                  <template v-slot:activator="{ props }">
+                    <div v-bind="props" class="stat-item stat-item--warning" :style="statistics.noPrice > 0 ? 'cursor: help;' : ''">
+                      <div class="stat-label">無單價跳過</div>
+                      <div class="stat-value">{{ statistics.noPrice }}</div>
+                    </div>
+                  </template>
+                  <div style="max-width: 400px;">
+                    <div style="font-weight: bold; margin-bottom: 8px;">無單價的原料料號：</div>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                      <div v-for="result in comparisonResults.filter(r => r.exists && !r.hasValidPrice)" :key="result.prodId" style="margin-bottom: 4px;">
+                        <span style="font-family: monospace; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 3px;">
+                          {{ result.prodId }}
+                        </span>
+                        <span style="margin-left: 8px; opacity: 0.9;">{{ result.materialName }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </v-tooltip>
               </v-col>
             </v-row>
           </v-sheet>
@@ -141,15 +166,16 @@
             <div class="info-section__header mb-3">
               <v-icon color="success" size="24">mdi-check-circle</v-icon>
               <span class="text-subtitle-1 font-weight-bold text-success ml-2">
-                比對結果預覽 (共 {{ comparisonResults.length }} 個原料)
+                比對結果預覽 (共 {{ comparisonResults.length }} 筆)
               </span>
             </div>
             
             <v-alert type="info" variant="tonal" class="mb-4" density="compact">
               <div class="text-caption">
                 <strong>說明：</strong>以下顯示 Excel 中每個原料料號的比對結果。
-                <strong class="text-success">綠色</strong>表示原料存在於資料庫中，
-                <strong class="text-error">紅色</strong>表示原料不存在於資料庫中。
+                <strong class="text-success">綠色</strong>表示可更新（料號存在且有單價），
+                <strong class="text-error">紅色</strong>表示料號不存在，
+                <strong class="text-warning">橙色</strong>表示料號存在但無單價。
               </div>
             </v-alert>
 
@@ -157,80 +183,48 @@
               <v-table density="compact" class="comparison-table" fixed-header>
                 <thead>
                   <tr>
-                    <th class="text-left">原料料號</th>
+                    <th class="text-left">原料料號 (ProdID)</th>
                     <th class="text-left">狀態</th>
-                    <th class="text-left">Excel 中的原料名稱</th>
+                    <th class="text-left">單價 (StdPrice)</th>
                     <th class="text-left">資料庫中的原料名稱</th>
-                    <th class="text-left">Composition 數量</th>
-                    <th class="text-left">Composition 預覽</th>
-                    <th class="text-center">展開</th>
+                    <th class="text-left">目前單價</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <template v-for="(result, index) in comparisonResults" :key="index">
-                    <tr :class="{ 'row-exists': result.exists, 'row-not-found': !result.exists }">
-                      <td class="text-left">
-                        <strong>{{ result.materialNumber }}</strong>
-                      </td>
-                      <td class="text-left">
-                        <v-chip 
-                          :color="result.exists ? 'success' : 'error'" 
-                          size="small" 
-                          variant="flat"
-                        >
-                          {{ result.exists ? '存在' : '不存在' }}
-                        </v-chip>
-                      </td>
-                      <td class="text-left">{{ result.materialName || '-' }}</td>
-                      <td class="text-left">
-                        <span :class="{ 'text-success': result.exists }">
-                          {{ result.existingMaterialName || '-' }}
-                        </span>
-                      </td>
-                      <td class="text-left">
-                        <v-chip size="small" variant="outlined">
-                          {{ result.compositionCount }}
-                        </v-chip>
-                      </td>
-                      <td class="text-left">
-                        <div class="composition-preview">
-                          {{ result.compositions.slice(0, 2).map(c => c.composition).join(', ') }}
-                          <span v-if="result.compositions.length > 2">...</span>
-                        </div>
-                      </td>
-                      <td class="text-center">
-                        <v-btn 
-                          size="small" 
-                          variant="text" 
-                          icon="mdi-chevron-down"
-                          @click="toggleExpand(index)"
-                        ></v-btn>
-                      </td>
-                    </tr>
-                    <tr v-if="expandedRows.has(index)" class="expanded-row">
-                      <td colspan="7">
-                        <div class="compositions-detail pa-4">
-                          <div class="text-subtitle-2 mb-2">Composition 詳細資訊：</div>
-                          <v-table density="compact" class="detail-table">
-                            <thead>
-                              <tr>
-                                <th class="text-left">項次</th>
-                                <th class="text-left">Composition</th>
-                                <th class="text-left">wt%</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr v-for="(comp, compIndex) in result.compositions" :key="compIndex">
-                                <td class="text-left">{{ comp.itemNumber }}</td>
-                                <td class="text-left">{{ comp.composition }}</td>
-                                <td class="text-left">{{ comp.wtPercent }}</td>
-                              </tr>
-                            </tbody>
-                          </v-table>
-                        </div>
-                      </td>
-                    </tr>
-                  </template>
+                  <tr v-for="(result, index) in comparisonResults" :key="index" 
+                      :class="{ 
+                        'row-can-update': result.canUpdate, 
+                        'row-not-found': !result.exists,
+                        'row-no-price': result.exists && !result.hasValidPrice
+                      }">
+                    <td class="text-left">
+                      <strong>{{ result.prodId }}</strong>
+                    </td>
+                    <td class="text-left">
+                      <v-chip 
+                        :color="result.canUpdate ? 'success' : (result.exists ? 'warning' : 'error')" 
+                        size="small" 
+                        variant="flat"
+                      >
+                        {{ result.canUpdate ? '可更新' : (result.exists ? '無單價' : '不存在') }}
+                      </v-chip>
+                    </td>
+                    <td class="text-left">
+                      <span :class="{ 'text-success font-weight-bold': result.hasValidPrice }">
+                        {{ result.stdPrice || '-' }}
+                      </span>
+                    </td>
+                    <td class="text-left">
+                      <span :class="{ 'text-success': result.exists }">
+                        {{ result.materialName || '-' }}
+                      </span>
+                    </td>
+                    <td class="text-left">
+                      <span class="text-grey">
+                        {{ result.currentPrice || '-' }}
+                      </span>
+                    </td>
+                  </tr>
                 </tbody>
               </v-table>
             </div>
@@ -258,7 +252,7 @@
             取消
           </v-btn>
           <v-btn 
-            v-if="comparisonResults.length > 0 && statistics.existing > 0"
+            v-if="comparisonResults.length > 0 && statistics.canUpdate > 0"
             color="primary" 
             variant="flat" 
             class="text-white"
@@ -266,7 +260,7 @@
             :disabled="loading"
             @click="processImport"
           >
-            確認匯入 ({{ statistics.existing }} 個原料)
+            確認匯入 ({{ statistics.canUpdate }} 個原料)
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -292,23 +286,17 @@ const dialog = ref(false)
 const selectedFile = ref(null)
 const selectedFileName = ref('')
 const errorMessage = ref('')
-const rawHeaders = ref([])
 const loading = ref(false)
 
-// 新增的 refs 用於存儲分組和比對結果
-const groupedMaterials = ref([]) // 分組後的原料資料：[{ materialNumber, materialName, compositions: [...] }]
+// 用於存儲解析和比對結果
+const priceData = ref([]) // 從 Excel 解析的價格資料：[{ prodId, stdPrice }]
 const existingMaterials = ref(new Map()) // 現有原料資料映射表：Map<materialNumber, rawMaterialData>
 const comparisonResults = ref([]) // 比對結果
-const expandedRows = ref(new Set()) // 展開的行索引集合
 
 // 欄位映射：中文欄位名 -> 英文欄位名
 const fieldMapping = {
-  '項次': 'itemNumber',
-  '分類': 'category',
-  '原料料號': 'materialNumber',
-  '原料名稱': 'materialName',
-  'Composition': 'composition',
-  'wt%': 'wtPercent'
+  'ProdID': 'prodId',
+  'StdPrice': 'stdPrice'
 }
 
 // Validation rules
@@ -335,40 +323,34 @@ const closeDialog = () => {
 const resetForm = () => {
   selectedFile.value = null
   selectedFileName.value = ''
-  rawHeaders.value = []
   errorMessage.value = ''
-  groupedMaterials.value = []
+  priceData.value = []
   existingMaterials.value = new Map()
   comparisonResults.value = []
-  expandedRows.value = new Set()
 }
 
 const onFileSelected = async (file) => {
   if (!file) {
     selectedFileName.value = ''
-    rawHeaders.value = []
     errorMessage.value = ''
-    groupedMaterials.value = []
+    priceData.value = []
     existingMaterials.value = new Map()
     comparisonResults.value = []
-    expandedRows.value = new Set()
     return
   }
 
   selectedFileName.value = file.name
   errorMessage.value = ''
-  rawHeaders.value = []
-  groupedMaterials.value = []
+  priceData.value = []
   existingMaterials.value = new Map()
   comparisonResults.value = []
-  expandedRows.value = new Set()
 
   try {
     await parseExcelFile(file)
   } catch (error) {
     console.error('Excel parsing error:', error)
     errorMessage.value = `解析 Excel 檔案時發生錯誤: ${error.message}`
-    groupedMaterials.value = []
+    priceData.value = []
     existingMaterials.value = new Map()
     comparisonResults.value = []
   }
@@ -383,14 +365,18 @@ const parseExcelFile = (file) => {
         const data = new Uint8Array(e.target.result)
         const workbook = XLSX.read(data, { type: 'array', cellStyles: true })
         
-        // 檢查是否有「成分組成」工作表
-        const targetSheetName = '成分組成'
-        if (!workbook.SheetNames.includes(targetSheetName)) {
-          reject(new Error(`找不到名為「${targetSheetName}」的工作表。可用的工作表: ${workbook.SheetNames.join(', ')}`))
+        // 檢查是否有「工作表5」或 「Sheet5」
+        let targetSheetName = null
+        if (workbook.SheetNames.includes('工作表5')) {
+          targetSheetName = '工作表5'
+        } else if (workbook.SheetNames.includes('Sheet5')) {
+          targetSheetName = 'Sheet5'
+        } else {
+          reject(new Error(`找不到名為「工作表5」或「Sheet5」的工作表。可用的工作表: ${workbook.SheetNames.join(', ')}`))
           return
         }
         
-        // 讀取「成分組成」工作表
+        // 讀取目標工作表
         const worksheet = workbook.Sheets[targetSheetName]
         
         // 將工作表轉換為 JSON，header: 1 表示使用第一行作為標題
@@ -419,26 +405,16 @@ const parseExcelFile = (file) => {
         cleanedHeaders.forEach((header, index) => {
           if (fieldMapping[header]) {
             headerIndexMap[fieldMapping[header]] = index
-          } else {
-            if (header.includes('Breakdown INCI Name')) {
-              if (!headerIndexMap['breakdownInciName']) {
-                headerIndexMap['breakdownInciName'] = index
-              }
-            } else if (header.includes('CAS NO') || header.includes('CAS NO.')) {
-              if (!headerIndexMap['casNo']) {
-                headerIndexMap['casNo'] = index
-              }
-            }
           }
         })
         
         // 檢查必要欄位
-        const coreFields = ['項次', '原料料號', 'Composition', 'wt%']
+        const coreFields = ['ProdID', 'StdPrice']
         const missingFields = []
         coreFields.forEach(fieldName => {
           const found = cleanedHeaders.some(h => {
             const cleaned = String(h).trim()
-            return cleaned === fieldName || (fieldName === 'Composition' && cleaned === 'Composition')
+            return cleaned === fieldName
           })
           if (!found) {
             missingFields.push(fieldName)
@@ -451,13 +427,9 @@ const parseExcelFile = (file) => {
           return
         }
         
-        rawHeaders.value = cleanedHeaders.filter(h => h && h.trim() !== '')
-        
-        // 按原料料號分組
-        const materialGroups = new Map()
-        let currentMaterialNumber = null
-        let currentMaterialName = null
-        let currentCategory = null
+        // 解析資料
+        const prices = []
+        const prodIdSeen = new Map() // 用於處理重複的 ProdID，取第一筆
         
         for (let i = 1; i < jsonData.length; i++) {
           const row = jsonData[i]
@@ -468,94 +440,49 @@ const parseExcelFile = (file) => {
           }
           
           // 讀取欄位值
-          const itemNumberIndex = headerIndexMap['itemNumber']
-          const materialNumberIndex = headerIndexMap['materialNumber']
-          const materialNameIndex = headerIndexMap['materialName']
-          const categoryIndex = headerIndexMap['category']
-          const compositionIndex = headerIndexMap['composition']
-          const wtPercentIndex = headerIndexMap['wtPercent']
+          const prodIdIndex = headerIndexMap['prodId']
+          const stdPriceIndex = headerIndexMap['stdPrice']
           
-          const itemNumber = row[itemNumberIndex] ? String(row[itemNumberIndex]).trim() : ''
-          const materialNumber = row[materialNumberIndex] ? String(row[materialNumberIndex]).trim() : ''
-          const materialName = row[materialNameIndex] ? String(row[materialNameIndex]).trim() : ''
-          const category = row[categoryIndex] ? String(row[categoryIndex]).trim() : ''
-          const composition = row[compositionIndex] ? String(row[compositionIndex]).trim() : ''
-          let wtPercent = row[wtPercentIndex] ? String(row[wtPercentIndex]).trim() : ''
+          let prodId = row[prodIdIndex] ? String(row[prodIdIndex]).trim() : ''
+          let stdPrice = row[stdPriceIndex] ? String(row[stdPriceIndex]).trim() : ''
           
-          // 處理 wt% - Excel 百分比格式轉換
-          if (wtPercent) {
-            // 移除可能存在的 % 符號
-            wtPercent = wtPercent.replace('%', '').trim()
-            
-            // 如果是數字
-            if (!isNaN(parseFloat(wtPercent))) {
-              let numValue = parseFloat(wtPercent)
-              
-              // 如果數值小於等於 1，很可能是 Excel 的百分比格式
-              // （例如 0.625 代表 62.5%，1 代表 100%）
-              // 需要乘以 100 轉換回實際百分比數值
-              if (numValue > 0 && numValue <= 1) {
-                numValue = numValue * 100
-              }
-              
-              // 移除尾部多餘的 0
-              wtPercent = numValue.toString()
-            }
-          }
-          
-          // 忽略沒有項次資料的行
-          if (!itemNumber) {
+          // 跳過 ProdID 為空的行
+          if (!prodId) {
             continue
           }
           
-          // 如果有原料料號，開始新的分組或更新當前分組
-          if (materialNumber) {
-            currentMaterialNumber = materialNumber
-            currentMaterialName = materialName
-            currentCategory = category
-            
-            if (!materialGroups.has(materialNumber)) {
-              materialGroups.set(materialNumber, {
-                materialNumber: materialNumber,
-                materialName: materialName,
-                category: category,
-                compositions: []
-              })
+          // 處理重複的 ProdID，取第一筆
+          if (prodIdSeen.has(prodId)) {
+            continue
+          }
+          prodIdSeen.set(prodId, true)
+          
+          // 處理 StdPrice：轉換為數字
+          let priceValue = null
+          if (stdPrice && stdPrice !== '') {
+            const parsed = parseFloat(stdPrice)
+            if (!isNaN(parsed)) {
+              priceValue = parsed.toString()
             }
           }
           
-          // 如果沒有原料料號但有項次，檢查是否有當前分組
-          if (!materialNumber && !currentMaterialNumber) {
-            reject(new Error(`第 ${i + 1} 行：原料料號為空但項次有值，且前面沒有有效的原料料號`))
-            return
-          }
-          
-          // 建立 Composition 物件
-          const compositionData = {
-            itemNumber: itemNumber,
-            composition: composition,
-            wtPercent: wtPercent
-          }
-          
-          // 加入到當前原料分組
-          if (currentMaterialNumber && materialGroups.has(currentMaterialNumber)) {
-            materialGroups.get(currentMaterialNumber).compositions.push(compositionData)
-          }
+          prices.push({
+            prodId: prodId,
+            stdPrice: priceValue
+          })
         }
         
-        if (materialGroups.size === 0) {
-          reject(new Error('Excel 檔案中沒有有效的原料資料'))
+        if (prices.length === 0) {
+          reject(new Error('Excel 檔案中沒有有效的價格資料'))
           return
         }
         
-        // 轉換為陣列
-        const groupedData = Array.from(materialGroups.values())
-        groupedMaterials.value = groupedData
+        priceData.value = prices
         
         // 查詢現有原料資料並進行比對
         await queryAndCompareMaterials()
         
-        resolve(groupedData)
+        resolve(prices)
       } catch (error) {
         reject(error)
       }
@@ -608,18 +535,20 @@ const queryAndCompareMaterials = async () => {
 const compareMaterials = () => {
   const results = []
   
-  groupedMaterials.value.forEach((material) => {
-    const exists = existingMaterials.value.has(material.materialNumber)
-    const existingData = exists ? existingMaterials.value.get(material.materialNumber) : null
+  priceData.value.forEach((priceItem) => {
+    const exists = existingMaterials.value.has(priceItem.prodId)
+    const existingData = exists ? existingMaterials.value.get(priceItem.prodId) : null
+    const hasValidPrice = priceItem.stdPrice !== null && priceItem.stdPrice !== ''
+    const canUpdate = exists && hasValidPrice
     
     results.push({
-      materialNumber: material.materialNumber,
-      materialName: material.materialName,
-      category: material.category,
-      compositionCount: material.compositions.length,
-      compositions: material.compositions,
+      prodId: priceItem.prodId,
+      stdPrice: priceItem.stdPrice,
       exists: exists,
-      existingMaterialName: existingData ? existingData.materialName : null,
+      hasValidPrice: hasValidPrice,
+      canUpdate: canUpdate,
+      materialName: existingData ? existingData.materialName : null,
+      currentPrice: existingData ? existingData.unitPrice : null,
       existingData: existingData
     })
   })
@@ -630,46 +559,34 @@ const compareMaterials = () => {
 // 計算統計資訊
 const statistics = computed(() => {
   const total = comparisonResults.value.length
-  const existing = comparisonResults.value.filter(r => r.exists).length
-  const notFound = total - existing
-  const totalCompositions = comparisonResults.value.reduce((sum, r) => sum + r.compositionCount, 0)
+  const canUpdate = comparisonResults.value.filter(r => r.canUpdate).length
+  const notFound = comparisonResults.value.filter(r => !r.exists).length
+  const noPrice = comparisonResults.value.filter(r => r.exists && !r.hasValidPrice).length
   
   return {
     total,
-    existing,
+    canUpdate,
     notFound,
-    totalCompositions
+    noPrice
   }
 })
 
-// 切換展開/收合
-const toggleExpand = (index) => {
-  if (expandedRows.value.has(index)) {
-    expandedRows.value.delete(index)
-  } else {
-    expandedRows.value.add(index)
-  }
-  // 觸發響應式更新
-  expandedRows.value = new Set(expandedRows.value)
-}
-
-// 處理匯入（更新現有原料的 compositions）
+// 處理匯入（更新現有原料的 unitPrice）
 const processImport = async () => {
   // 確認是否繼續
   const shouldContinue = await proxy.$swal({
-    title: '確認更新原料資料',
+    title: '確認更新原料單價',
     html: `
       <div style="text-align: left;">
-        <p><strong>將更新以下原料的成分組成資訊：</strong></p>
+        <p><strong>將更新以下原料的單價資訊：</strong></p>
         <ul style="margin-top: 10px;">
-          <li>更新原料數量：<strong>${statistics.value.existing}</strong> 個</li>
-          <li>總 Composition 數：<strong>${statistics.value.totalCompositions}</strong> 個</li>
+          <li>更新原料數量：<strong>${statistics.value.canUpdate}</strong> 個</li>
         </ul>
         <p style="margin-top: 15px; color: #f44336;">
-          <strong>注意：</strong>原料的成分組成資料將被<strong>完全替換</strong>為 Excel 中的資料。
+          <strong>注意：</strong>原料的單價資料將被<strong>完全替換</strong>為 Excel 中的資料。
         </p>
         <p style="color: #666;">
-          不存在於資料庫的 ${statistics.value.notFound} 個原料將被跳過。
+          料號不存在的 ${statistics.value.notFound} 筆資料及無單價的 ${statistics.value.noPrice} 筆資料將被跳過。
         </p>
       </div>
     `,
@@ -688,15 +605,15 @@ const processImport = async () => {
   loading.value = true
   
   try {
-    // 過濾出存在於資料庫中的原料
-    const materialsToUpdate = comparisonResults.value.filter(result => result.exists)
+    // 過濾出可更新的原料
+    const materialsToUpdate = comparisonResults.value.filter(result => result.canUpdate)
     
     if (materialsToUpdate.length === 0) {
       loading.value = false
       proxy.$swal({
         icon: 'info',
         title: '沒有需要更新的原料',
-        text: '所有原料都不存在於資料庫中',
+        text: '所有原料都無法更新（料號不存在或無單價）',
         confirmButtonText: '確定',
         confirmButtonColor: '#3085d6'
       })
@@ -707,10 +624,10 @@ const processImport = async () => {
     const updatePayload = materialsToUpdate.map(material => {
       const existingData = material.existingData
       
-      // 保留現有資料，只更新 compositions 欄位
+      // 保留現有資料，只更新 unitPrice 欄位
       const updatedData = {
         ...existingData,
-        compositions: material.compositions
+        unitPrice: material.stdPrice
       }
       
       // 更新 editInfo
@@ -725,7 +642,7 @@ const processImport = async () => {
       
       return {
         snkey: existingData.snkey,
-        materialNumber: material.materialNumber,
+        materialNumber: material.prodId,
         datalist: JSON.stringify(updatedData),
         updateTime: dayjs().format('YYYY-MM-DD HH:mm:ss')
       }
@@ -771,10 +688,7 @@ const processImport = async () => {
         title: '更新成功',
         html: `
           <div style="text-align: left;">
-            <p>已成功更新 <strong>${materialsToUpdate.length}</strong> 個原料的成分組成資料</p>
-            <p style="margin-top: 10px; color: #666;">
-              總共更新了 <strong>${statistics.value.totalCompositions}</strong> 個 Composition
-            </p>
+            <p>已成功更新 <strong>${materialsToUpdate.length}</strong> 個原料的單價資料</p>
           </div>
         `,
         confirmButtonText: '確定',
@@ -815,7 +729,7 @@ const processImport = async () => {
   color: #ffffff;
 
   &--import {
-    background: linear-gradient(135deg, rgba(46, 125, 50, 0.95), rgba(76, 175, 80, 0.85));
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.95), rgba(66, 165, 245, 0.85));
   }
 }
 
@@ -843,56 +757,6 @@ const processImport = async () => {
   overflow-y: auto;
   border-radius: 8px;
   border: 1px solid rgba(123, 163, 184, 0.2);
-}
-
-.preview-table {
-  background: white;
-  width: 100%;
-
-  th {
-    background-color: rgba(46, 125, 50, 0.1);
-    font-weight: 600;
-    color: var(--daycare-primary);
-    position: sticky;
-    top: 0;
-    z-index: 1;
-  }
-
-  td, th {
-    padding: 10px 12px;
-    border-bottom: 1px solid rgba(123, 163, 184, 0.2);
-  }
-
-  td {
-    white-space: normal;
-    word-break: break-word;
-    max-width: 200px;
-  }
-
-  .cell-content {
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  tbody tr:hover {
-    background-color: rgba(46, 125, 50, 0.05);
-  }
-
-  tbody tr:nth-child(even) {
-    background-color: rgba(0, 0, 0, 0.02);
-  }
-
-  .limited-ingredient {
-    color: #d32f2f !important;
-    font-weight: 600;
-  }
-}
-
-.limited-ingredient-text {
-  color: #d32f2f;
-  font-weight: 600;
 }
 
 .statistics-section {
@@ -929,8 +793,8 @@ const processImport = async () => {
     color: #f44336;
   }
   
-  &--info .stat-value {
-    color: #2196f3;
+  &--warning .stat-value {
+    color: #ff9800;
   }
 }
 
@@ -939,9 +803,9 @@ const processImport = async () => {
   width: 100%;
   
   th {
-    background-color: rgba(46, 125, 50, 0.1);
+    background-color: rgba(33, 150, 243, 0.1);
     font-weight: 600;
-    color: var(--daycare-primary);
+    color: #1976d2;
     position: sticky;
     top: 0;
     z-index: 1;
@@ -952,7 +816,7 @@ const processImport = async () => {
     border-bottom: 1px solid rgba(123, 163, 184, 0.2);
   }
   
-  .row-exists {
+  .row-can-update {
     background-color: rgba(76, 175, 80, 0.05);
     
     &:hover {
@@ -968,38 +832,12 @@ const processImport = async () => {
     }
   }
   
-  .expanded-row {
-    background-color: rgba(33, 150, 243, 0.05);
+  .row-no-price {
+    background-color: rgba(255, 152, 0, 0.05);
     
-    td {
-      padding: 0;
+    &:hover {
+      background-color: rgba(255, 152, 0, 0.1);
     }
-  }
-  
-  .composition-preview {
-    max-width: 250px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-}
-
-.compositions-detail {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.detail-table {
-  background: white;
-  border-radius: 4px;
-  
-  th {
-    background-color: rgba(33, 150, 243, 0.1);
-    font-weight: 600;
-    color: #1976d2;
-  }
-  
-  td, th {
-    padding: 8px 12px;
   }
 }
 </style>

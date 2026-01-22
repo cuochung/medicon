@@ -1,36 +1,74 @@
 {
-    "snkey": "1",
-    "itemNumber": "",
-    "category": "保濕劑",
-    "materialNumber": "SC30001",
-    "productName": "1,3-Butylene Glycol",
-    "materialName": "1.3-BG",
-    "inciName": "Butylene Glycol",
-    "chineseName": "丁二醇",
-    "efficacy": "(報送碼=001946-02820-4598)",
-    "supplier": "亨元",
-    "brand": "KH NeoChem",
-    "moq": "200",
-    "unitPrice": "148",
-    "casNumber": "107-88-0",
-    "ph": "",
+    "customer_key": "true",
+    "customer_add_key": "true",
+    "customer_edit_key": "true",
+    "customer_del_key": "true",
+    "customer_search_key": "true",
+    "order_key": "true",
+    "order_add_key": "true",
+    "order_edit_key": "true",
+    "order_del_key": "true",
+    "order_search_key": "true",
+    "personnel_key": "true",
+    "personnel_add_key": "true",
+    "personnel_edit_key": "true",
+    "personnel_del_key": "true",
+    "personnel_search_key": "true",
     "createInfo": {
-        "snkey": "34",
-        "name": "系統管理員",
-        "time": "2026-01-21 13:33:08"
+        "snkey": "31",
+        "name": "\u7cfb\u7d71\u7ba1\u7406\u54e1",
+        "time": "2025-11-17 19:38:50"
     },
     "editInfo": [
         {
             "snkey": "34",
-            "name": "系統管理員",
-            "time": "2026-01-21 15:14:32"
+            "name": "\u7cfb\u7d71\u7ba1\u7406\u54e1",
+            "time": "2026-01-22 18:20:00"
+        },
+        {
+            "snkey": "34",
+            "name": "\u7cfb\u7d71\u7ba1\u7406\u54e1",
+            "time": "2026-01-20 20:30:28"
+        },
+        {
+            "snkey": "34",
+            "name": "\u7cfb\u7d71\u7ba1\u7406\u54e1",
+            "time": "2026-01-20 18:03:04"
+        },
+        {
+            "snkey": "34",
+            "name": "\u7cfb\u7d71\u7ba1\u7406\u54e1",
+            "time": "2025-11-18 20:43:39"
         }
     ],
-    "compositions": [
-        {
-            "itemNumber": "1",
-            "composition": "Butylene Glycol",
-            "wtPercent": "1"
-        }
-    ]
+    "account": "master",
+    "password": "testpass",
+    "username": "\u7cfb\u7d71\u7ba1\u7406\u54e1",
+    "snkey": "34",
+    "last_login_time": "2026-01-22 18:27:56",
+    "wallet_key": "true",
+    "wallet_add_key": "true",
+    "wallet_edit_key": "true",
+    "wallet_del_key": "true",
+    "wallet_search_key": "true",
+    "supplier_key": "true",
+    "supplier_add_key": "true",
+    "supplier_edit_key": "true",
+    "supplier_del_key": "true",
+    "supplier_search_key": "true",
+    "ingredient_key": "true",
+    "ingredient_add_key": "true",
+    "ingredient_edit_key": "true",
+    "ingredient_del_key": "true",
+    "ingredient_search_key": "true",
+    "RawMaterial_key": "true",
+    "RawMaterial_add_key": "true",
+    "RawMaterial_edit_key": "true",
+    "RawMaterial_del_key": "true",
+    "RawMaterial_search_key": "true",
+    "Recipe_key": "true",
+    "Recipe_add_key": "true",
+    "Recipe_edit_key": "true",
+    "Recipe_del_key": "true",
+    "Recipe_search_key": "true"
 }

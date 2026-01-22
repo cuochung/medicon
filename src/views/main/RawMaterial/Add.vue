@@ -126,6 +126,56 @@
                 <span class="text-subtitle-1 font-weight-bold text-primary ml-2">商業資訊</span>
               </div>
               <v-row dense class="mt-2">
+                <!-- 供應商選擇區塊 -->
+                <v-col cols="12">
+                  <div class="supplier-selection-section">
+                    <div class="text-subtitle-2 mb-2 d-flex align-center">
+                      <v-icon size="small" color="primary" class="mr-1">mdi-account-multiple</v-icon>
+                      供應商選擇
+                    </div>
+                    <v-autocomplete
+                      v-model="selectedSuppliers"
+                      :items="supplierList"
+                      item-title="displayName"
+                      item-value="supplierNumber"
+                      label="選擇供應商（可多選）"
+                      prepend-inner-icon="mdi-magnify"
+                      density="comfortable"
+                      variant="outlined"
+                      multiple
+                      chips
+                      closable-chips
+                      clearable
+                      no-data-text="無符合的供應商"
+                      @update:model-value="updateSuppliers"
+                    >
+                      <template v-slot:item="{ props, item }">
+                        <v-list-item v-bind="props">
+                          <template v-slot:prepend>
+                            <v-icon>mdi-store</v-icon>
+                          </template>
+                          <template v-slot:title>
+                            <span class="font-weight-medium">{{ item.raw.supplierNumber }}</span>
+                          </template>
+                          <template v-slot:subtitle>
+                            {{ item.raw.supplierFullName }}
+                          </template>
+                        </v-list-item>
+                      </template>
+                      <template v-slot:chip="{ item }">
+                        <v-chip
+                          color="primary"
+                          variant="tonal"
+                        >
+                          <v-icon start size="small">mdi-store</v-icon>
+                          {{ item.title }}
+                        </v-chip>
+                      </template>
+                    </v-autocomplete>
+                  </div>
+                  <v-divider class="my-4"></v-divider>
+                </v-col>
+                
                 <v-col cols="12" md="6">
                   <v-text-field
                     label="提供廠商"
@@ -133,6 +183,8 @@
                     v-model="list.supplier"
                     density="comfortable"
                     variant="outlined"
+                    hint="手動輸入廠商名稱（可選）"
+                    persistent-hint
                   ></v-text-field>
                 </v-col>
                 <v-col cols="12" md="6">
@@ -296,7 +348,7 @@
 </template>
 
 <script setup>
-import { ref, nextTick, getCurrentInstance } from 'vue'
+import { ref, nextTick, getCurrentInstance, onMounted } from 'vue'
 import { useStore } from '@/stores/useStore'
 import dayjs from "dayjs"
 import api from '@/assets/js/api'
@@ -326,6 +378,7 @@ const list = ref({
   chineseName: '',
   efficacy: '',
   supplier: '',
+  suppliers: [], // 新增：供應商陣列
   brand: '',
   moq: '',
   unitPrice: '',
@@ -339,6 +392,8 @@ const processType = ref('')
 const title = ref('')
 const titleStyle = ref('')
 const form = ref(null)
+const supplierList = ref([]) // 供應商列表
+const selectedSuppliers = ref([]) // 當前選擇的供應商（多選）
 
 // Validation rules
 const emptyRules = [(v) => !!v || "不可空白"]
@@ -358,6 +413,7 @@ const addProcess = () => {
     chineseName: '',
     efficacy: '',
     supplier: '',
+    suppliers: [],
     brand: '',
     moq: '',
     unitPrice: '',
@@ -367,6 +423,7 @@ const addProcess = () => {
     createInfo: {},
     editInfo: []
   }
+  selectedSuppliers.value = []
   nextTick(() => {
     if (form.value) {
       form.value.resetValidation()
@@ -389,6 +446,7 @@ const editProcess = (item) => {
     chineseName: item.chineseName || '',
     efficacy: item.efficacy || '',
     supplier: item.supplier || '',
+    suppliers: item.suppliers ? JSON.parse(JSON.stringify(item.suppliers)) : [],
     brand: item.brand || '',
     moq: item.moq || '',
     unitPrice: item.unitPrice || '',
@@ -399,7 +457,30 @@ const editProcess = (item) => {
     createInfo: item.createInfo || {},
     editInfo: item.editInfo || []
   }
+  // 同步已選擇的供應商到選擇器
+  if (item.suppliers && item.suppliers.length > 0) {
+    selectedSuppliers.value = item.suppliers.map(s => s.supplierNumber)
+  } else {
+    selectedSuppliers.value = []
+  }
   dialog.value = true
+}
+
+// 供應商管理函數
+const updateSuppliers = (supplierNumbers) => {
+  if (!supplierNumbers || !Array.isArray(supplierNumbers)) {
+    list.value.suppliers = []
+    return
+  }
+  
+  // 根據選擇的供應商料號，建立完整的供應商資料陣列
+  list.value.suppliers = supplierNumbers.map(supplierNumber => {
+    const supplier = supplierList.value.find(s => s.supplierNumber === supplierNumber)
+    return {
+      supplierNumber: supplier?.supplierNumber || supplierNumber,
+      supplierFullName: supplier?.supplierFullName || ''
+    }
+  }).filter(s => s.supplierNumber) // 過濾掉無效的項目
 }
 
 // Compositions 管理函數
@@ -524,6 +605,30 @@ const editOK = async () => {
     proxy.$swal({ icon: "error", title: "資料輸入不完整!!請再次確認!!" })
   }
 }
+
+// 載入供應商列表
+const loadSuppliers = async () => {
+  try {
+    const rs = await api.get('supplier')
+    if (rs && rs.length > 0) {
+      supplierList.value = rs.map(item => {
+        const data = JSON.parse(item.datalist)
+        return {
+          supplierNumber: data.supplierNumber || '',
+          supplierFullName: data.supplierFullName || '',
+          displayName: `${data.supplierNumber} - ${data.supplierFullName}`
+        }
+      }).filter(item => item.supplierNumber) // 過濾掉沒有料號的
+    }
+  } catch (error) {
+    console.error('載入供應商列表失敗:', error)
+  }
+}
+
+// 初始化時載入供應商列表
+onMounted(() => {
+  loadSuppliers()
+})
 
 defineExpose({
   editProcess

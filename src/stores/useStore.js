@@ -20,6 +20,14 @@ export const useStore = defineStore('company', () => {
 
     //功能名稱,樣式,key值,引用圖片,授權,icon圖片設定,
     authKeys: [
+      //配方管理
+      {
+        label: "配方管理", class: "ma-1 white--text", color: "primary", keyName: 'Recipe',
+        image: new URL('@/assets/img/document_meisaisyo.png', import.meta.url).href,
+        route: "/main/Recipe",
+        authKey: "Recipe_key",
+        icon: 'mdi-bottle-tonic-outline',
+      },
       {
         label: "原料管理", class: "ma-1 white--text", color: "primary", keyName: 'RawMaterial',
         image: new URL('@/assets/img/job_chinretsu_man.png', import.meta.url).href,
@@ -29,7 +37,7 @@ export const useStore = defineStore('company', () => {
       },
       {
         label: "供應商管理", class: "ma-1 white--text", color: "primary", keyName: 'supplier',
-        image: new URL('@/assets/img/shopping_order_youshi.png', import.meta.url).href,
+        image: new URL('@/assets/img/nimotsu_box_close_bad.png', import.meta.url).href,
         route: "/main/Supplier",
         authKey: "supplier_key",
         icon: 'mdi-store',

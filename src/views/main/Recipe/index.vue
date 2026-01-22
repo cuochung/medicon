@@ -1,17 +1,17 @@
 <template>
-  <div class="raw-material-list pa-6">
+  <div class="recipe-list pa-6">
     <v-container fluid class="pa-0">
       <v-row>
         <v-col cols="12">
-          <v-sheet class="raw-material-hero" elevation="0" rounded="xl">
+          <v-sheet class="recipe-hero" elevation="0" rounded="xl">
             <div class="d-flex flex-column flex-md-row align-center justify-space-between">
               <div class="d-flex align-center mb-4 mb-md-0">
                 <v-avatar color="primary" variant="tonal" size="48" class="mr-3">
-                  <v-icon color="primary">mdi-flask</v-icon>
+                  <v-icon color="primary">mdi-flask-outline</v-icon>
                 </v-avatar>
                 <div>
-                  <h2 class="hero-title mb-1">原料管理</h2>
-                  <p class="hero-subtitle mb-0">維護原料資料，掌握原料資訊。</p>
+                  <h2 class="hero-title mb-1">配方管理</h2>
+                  <p class="hero-subtitle mb-0">維護產品配方，管理配方資訊。</p>
                 </div>
               </div>
               <div class="d-flex align-center gap-3">
@@ -31,42 +31,42 @@
       <v-row class="summary-row" dense>
         <v-col cols="12" sm="6" md="3">
           <v-card class="summary-card" variant="tonal" color="primary">
-            <div class="summary-card__title">原料總數</div>
+            <div class="summary-card__title">配方總數</div>
             <div class="summary-card__value">{{ totalCount }}</div>
-            <div class="summary-card__caption">目前已建立的原料數量</div>
+            <div class="summary-card__caption">目前已建立的配方數量</div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="6" md="3">
           <v-card class="summary-card" variant="tonal" color="secondary">
-            <div class="summary-card__title">有提供廠商</div>
-            <div class="summary-card__value">{{ withSupplierCount }}</div>
-            <div class="summary-card__caption">已填寫提供廠商的原料</div>
+            <div class="summary-card__title">平均原料數</div>
+            <div class="summary-card__value">{{ averageItemCount }}</div>
+            <div class="summary-card__caption">每個配方平均使用原料數</div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="6" md="3">
           <v-card class="summary-card" variant="tonal" color="info">
-            <div class="summary-card__title">有 CAS#</div>
-            <div class="summary-card__value">{{ withCasNumberCount }}</div>
-            <div class="summary-card__caption">已填寫 CAS# 的原料</div>
+            <div class="summary-card__title">有版本號</div>
+            <div class="summary-card__value">{{ withVersionCount }}</div>
+            <div class="summary-card__caption">已填寫版本號的配方</div>
           </v-card>
         </v-col>
         <v-col cols="12" sm="6" md="3">
           <v-card class="summary-card" variant="tonal" color="warning">
-            <div class="summary-card__title">無庫存</div>
-            <div class="summary-card__value">{{ noStockCount }}</div>
-            <div class="summary-card__caption">項次中無庫存的原料總數</div>
+            <div class="summary-card__title">有備註</div>
+            <div class="summary-card__value">{{ withNotesCount }}</div>
+            <div class="summary-card__caption">已填寫備註的配方</div>
           </v-card>
         </v-col>
       </v-row>
 
       <v-row class="mt-4">
         <v-col cols="12">
-          <v-sheet class="raw-material-toolbar" elevation="0" rounded="xl">
+          <v-sheet class="recipe-toolbar" elevation="0" rounded="xl">
             <v-row align="center" no-gutters class="toolbar-row">
               <v-col cols="12" md="8" lg="7" class="search-col">
                 <v-text-field 
                   v-model="searchKey" 
-                  label="搜尋原料關鍵字" 
+                  label="搜尋配方關鍵字" 
                   density="comfortable" 
                   variant="outlined"
                   prepend-inner-icon="mdi-magnify" 
@@ -77,13 +77,9 @@
               </v-col>
               <v-col cols="12" md="4" lg="5" class="button-col">
                 <div class="button-group">
-                  <importRawMaterial class="toolbar-btn" @getAllData="getAllData"></importRawMaterial>
-                  <importCostComposition class="toolbar-btn" @imported="getAllData"></importCostComposition>
-                  <importUnitPrice class="toolbar-btn" @imported="getAllData"></importUnitPrice>
                   <popupadd 
                     ref="childFn" 
-                    :authKeys="authKeys" 
-                    :materialItems="items"
+                    :recipeItems="items"
                     :usingDatabase="usingDatabase" 
                     class="toolbar-btn" 
                     @getAllData="getAllData"
@@ -95,7 +91,7 @@
         </v-col>
       </v-row>
 
-      <v-card class="raw-material-table-card">
+      <v-card class="recipe-table-card">
         <v-card-text>
           <PaginatedIterator :items="searchfilter" v-model:page="currentPage" v-model:items-per-page="itemsPerPage"
             :items-per-page-options="itemsPerPageOptions">
@@ -105,21 +101,16 @@
                   <thead class="title text-h6">
                     <tr>
                       <th class="text-left"></th>
-                      <th class="text-left">項次</th>
-                      <th class="text-left">原料料號</th>
-                      <th class="text-left">商品名</th>
-                      <th class="text-left">原料名稱</th>
-                      <th class="text-left">類別</th>
-                      <th class="text-left">INCI NAME</th>
-                      <th class="text-left">中文名</th>
-                      <th class="text-left">成分</th>
-                      <th class="text-left">CAS#</th>
-                      <th class="text-left">提供廠商</th>
-                      <th class="text-left">廠牌</th>
-                      <th class="text-left">MOQ(Kg)</th>
-                      <th class="text-left">單價</th>
-                      <th class="text-left">pH</th>
-                      <th class="text-left">功效</th>
+                      <th class="text-left">配方編號</th>
+                      <th class="text-left">產品名稱</th>
+                      <th class="text-left">版本</th>
+                      <th class="text-left">產品規格</th>
+                      <th class="text-left">生產批量</th>
+                      <th class="text-left">總生產量</th>
+                      <th class="text-left">單位成本</th>
+                      <th class="text-left">原料數量</th>
+                      <th class="text-left">總百分比</th>
+                      <th class="text-left">備註</th>
                       <th class="text-left">創建紀錄</th>
                       <th class="text-left">修改紀錄</th>
                     </tr>
@@ -143,43 +134,30 @@
                           </v-list>
                         </v-menu>
                       </td>
-                      <td>{{ item.raw.itemNumber || '-' }}</td>
-                      <td>{{ item.raw.materialNumber || '-' }}</td>
+                      <td>{{ item.raw.recipeNumber || '-' }}</td>
                       <td>{{ item.raw.productName || '-' }}</td>
-                      <td>{{ item.raw.materialName || '-' }}</td>
-                      <td>{{ item.raw.category || '-' }}</td>
-                      <td>{{ item.raw.inciName || '-' }}</td>
-                      <td>{{ item.raw.chineseName || '-' }}</td>
-                  <td>
-                    <div v-if="item.raw.compositions && item.raw.compositions.length > 0" class="text-truncate" style="max-width: 200px">
-                      <v-tooltip location="top">
-                        <template v-slot:activator="{ props }">
-                          <span v-bind="props" style="cursor: help;">
-                            {{ item.raw.compositions.map(c => c.composition).join(', ') }}
-                            <v-chip size="x-small" variant="outlined" class="ml-1">
-                              {{ item.raw.compositions.length }}
-                            </v-chip>
-                          </span>
-                        </template>
-                        <div style="max-width: 400px;">
-                          <div v-for="(comp, idx) in item.raw.compositions" :key="idx" class="mb-1">
-                            <strong>{{ comp.itemNumber }}.</strong> {{ comp.composition }}
-                            <span v-if="comp.wtPercent"> ({{ formatWtPercent(comp.wtPercent) }})</span>
-                          </div>
-                        </div>
-                      </v-tooltip>
-                    </div>
-                    <span v-else>-</span>
-                  </td>
-                      <td>{{ item.raw.casNumber || '-' }}</td>
-                      <td>{{ item.raw.supplier || '-' }}</td>
-                      <td>{{ item.raw.brand || '-' }}</td>
-                      <td>{{ item.raw.moq || '-' }}</td>
-                      <td>{{ item.raw.unitPrice || '-' }}</td>
-                      <td>{{ item.raw.ph || '-' }}</td>
+                      <td>{{ item.raw.version || '-' }}</td>
+                      <td>{{ item.raw.productSpec || '-' }}</td>
+                      <td>{{ item.raw.productionBatch || '-' }}</td>
+                      <td>{{ item.raw.totalProduction || '-' }}</td>
+                      <td>{{ formatCurrency(item.raw.unitCost) }}</td>
                       <td>
-                        <div class="text-truncate" style="max-width: 200px" :title="item.raw.efficacy">
-                          {{ item.raw.efficacy || '-' }}
+                        <v-chip size="small" variant="outlined" color="primary">
+                          {{ (item.raw.items || []).length }}
+                        </v-chip>
+                      </td>
+                      <td>
+                        <v-chip 
+                          size="small" 
+                          variant="outlined" 
+                          :color="getTotalPercentageColor(item.raw)"
+                        >
+                          {{ calculateTotalPercentage(item.raw) }}%
+                        </v-chip>
+                      </td>
+                      <td>
+                        <div class="text-truncate" style="max-width: 200px" :title="item.raw.notes">
+                          {{ item.raw.notes || '-' }}
                         </div>
                       </td>
                       <td>
@@ -214,9 +192,6 @@ import { ref, computed, onMounted } from 'vue'
 import { useStore } from '@/stores/useStore'
 import { getCurrentInstance } from 'vue'
 import popupadd from "./Add.vue"
-import importRawMaterial from "./importRawMaterial.vue"
-import importCostComposition from "./importCostComposition.vue"
-import importUnitPrice from "./importUnitPrice.vue"
 
 import PaginatedIterator from '@/components/PaginatedIterator.vue'
 import dayjs from "dayjs"
@@ -228,9 +203,8 @@ const childFn = ref(null)
 
 // 響應式數據
 const items = ref([])
-const usingDatabase = ref("rawMaterial")
+const usingDatabase = ref("recipe")
 const searchKey = ref("")
-const auth = ref("")
 
 // 分頁相關
 const currentPage = ref(1);
@@ -241,22 +215,20 @@ const itemsPerPageOptions = [
   { value: 36, title: '36' },
 ];
 
-const authKeys = computed(() => {
-  return store.state.authKeys.filter((i) => i.authKey != "exit_key")
+const totalCount = computed(() => items.value.length)
+
+const averageItemCount = computed(() => {
+  if (items.value.length === 0) return 0
+  const total = items.value.reduce((sum, item) => sum + ((item?.items || []).length), 0)
+  return Math.round(total / items.value.length * 10) / 10
 })
 
-const totalCount = computed(() => items.value.length)
-const withSupplierCount = computed(() => 
-  items.value.filter((item) => item?.supplier).length
+const withVersionCount = computed(() => 
+  items.value.filter((item) => item?.version).length
 )
-const withCasNumberCount = computed(() => 
-  items.value.filter((item) => item?.casNumber).length
-)
-const noStockCount = computed(() => 
-  items.value.filter((item) => {
-    const itemNumber = item?.itemNumber
-    return !itemNumber || (typeof itemNumber === 'string' && itemNumber.trim() === '') || itemNumber === null || itemNumber === undefined
-  }).length
+
+const withNotesCount = computed(() => 
+  items.value.filter((item) => item?.notes).length
 )
 
 const searchfilter = computed(() => {
@@ -276,45 +248,49 @@ const searchfilter = computed(() => {
 // 方法
 const getAllData = async () => {
   await api.get(usingDatabase.value).then((rs) => {
-    if (rs.length > 0) {
+    if (rs && rs.length > 0) {
       items.value = rs.map((i) => ({
         ...JSON.parse(i.datalist),
         snkey: i.snkey,
       }))
       
-      // 按原料料號從小到大排序
+      // 按配方編號排序
       items.value.sort((a, b) => {
-        const numA = a.materialNumber || ''
-        const numB = b.materialNumber || ''
-        
-        // 嘗試轉換為數字進行比較
-        const numAInt = parseInt(numA)
-        const numBInt = parseInt(numB)
-        
-        // 如果兩個都是有效數字，按數字排序
-        if (!isNaN(numAInt) && !isNaN(numBInt)) {
-          return numAInt - numBInt
-        }
-        
-        // 否則按字符串排序
+        const numA = a.recipeNumber || ''
+        const numB = b.recipeNumber || ''
         return String(numA).localeCompare(String(numB), 'zh-TW', { numeric: true })
       })
+    } else {
+      items.value = []
     }
   })
-
 }
 
 const edit = (item) => {
   childFn.value.editProcess(item)
 }
 
-const formatWtPercent = (wtPercent) => {
-  if (!wtPercent) return ''
-  const value = wtPercent.toString().trim()
-  // 如果已經包含 % 符號，直接返回
-  if (value.includes('%')) return value
-  // 否則加上 % 符號
-  return value + '%'
+const formatCurrency = (value) => {
+  if (!value && value !== 0) return '-'
+  const num = parseFloat(value)
+  if (isNaN(num)) return '-'
+  return num.toFixed(2)
+}
+
+const calculateTotalPercentage = (recipe) => {
+  if (!recipe.items || recipe.items.length === 0) return '0.00'
+  const total = recipe.items.reduce((sum, item) => {
+    const percentage = parseFloat(item.percentage) || 0
+    return sum + percentage
+  }, 0)
+  return total.toFixed(2)
+}
+
+const getTotalPercentageColor = (recipe) => {
+  const total = parseFloat(calculateTotalPercentage(recipe))
+  if (Math.abs(total - 100) < 0.01) return 'success'
+  if (total > 100) return 'error'
+  return 'warning'
 }
 
 const del = async (item) => {
@@ -359,18 +335,17 @@ const del = async (item) => {
 
 // 生命週期鉤子
 onMounted(async () => {
-  auth.value = store.state.pData
   await getAllData()
 })
 </script>
 
 <style scoped lang="scss">
-.raw-material-list {
+.recipe-list {
   min-height: 100%;
   background: linear-gradient(135deg, rgba(168, 197, 181, 0.18), rgba(123, 163, 184, 0.1));
 }
 
-.raw-material-hero {
+.recipe-hero {
   background: linear-gradient(135deg, rgba(74, 107, 95, 0.18), rgba(123, 163, 184, 0.2));
   border: 1px solid var(--daycare-divider-light);
   box-shadow: 0 10px 24px rgba(74, 107, 95, 0.18);
@@ -422,7 +397,7 @@ onMounted(async () => {
   }
 }
 
-.raw-material-toolbar {
+.recipe-toolbar {
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid var(--daycare-divider-light);
   padding: 18px 24px;
@@ -515,21 +490,13 @@ onMounted(async () => {
   }
 }
 
-.raw-material-table-card {
+.recipe-table-card {
   border-radius: 24px;
   box-shadow: 0 14px 40px rgba(74, 107, 95, 0.14);
   border: 1px solid rgba(91, 143, 163, 0.16);
   margin-top: 24px;
 }
 
-.preview-avatar {
-  position: relative;
-  display: inline-flex;
-  border-radius: 50%;
-  box-shadow: 0 6px 16px rgba(74, 107, 95, 0.16);
-}
-
-// 按鈕 hover 樣式
 :deep(.v-btn) {
   transition: all 0.3s ease;
   
@@ -543,8 +510,7 @@ onMounted(async () => {
   }
 }
 
-// 重新整理按鈕 hover
-.raw-material-hero :deep(.v-btn) {
+.recipe-hero :deep(.v-btn) {
   &:hover {
     background-color: rgba(74, 107, 95, 0.15) !important;
     transform: translateY(-2px);
@@ -552,8 +518,7 @@ onMounted(async () => {
   }
 }
 
-// 工具列按鈕 hover
-.raw-material-toolbar :deep(.v-btn) {
+.recipe-toolbar :deep(.v-btn) {
   transition: all 0.3s ease;
   
   &:hover {
@@ -565,7 +530,6 @@ onMounted(async () => {
     transform: translateY(0);
   }
 
-  // 響應式字體大小
   @media (max-width: 599px) {
     font-size: 0.875rem;
     padding: 8px 16px;
@@ -576,8 +540,7 @@ onMounted(async () => {
   }
 }
 
-// 表格操作按鈕 hover
-.raw-material-table-card :deep(.v-btn) {
+.recipe-table-card :deep(.v-btn) {
   transition: all 0.2s ease;
   
   &:hover {
@@ -591,7 +554,6 @@ onMounted(async () => {
   }
 }
 
-// 圖標按鈕 hover
 :deep(.v-btn--icon) {
   &:hover {
     background-color: rgba(74, 107, 95, 0.1) !important;
