@@ -494,46 +494,73 @@ const processImport = async () => {
     console.log('Payload:', payload)
 
     // 使用 CI 伺服器新增多筆資料(沒開下面那個Rust伺服器時可以用)
-    const rs = await api.options(`general/addMulti/${store.state.databaseName}/raw_material`, payload)
+    const rs = await api.addMulti(`raw_material`, payload)
+    console.log('API 回應:', rs)
     
     // 使用 Rust 伺服器新增多筆資料
     // const rs = await api.rustAddMulti('raw_material', payload)
-    
-    console.log('API 回應:', rs)
+    // console.log('rust API 回應:', rs)
     
     loading.value = false
     
-    // 判斷回應結果
-    if (rs.ok && rs.rowsInserted > 0) {
-      let successMessage = `已成功匯入 ${rs.rowsInserted} 筆資料`
-      if (skippedCount > 0) {
-        successMessage += `\n（已跳過 ${skippedCount} 筆已存在的資料）`
+    // 判斷回應結果（CI 伺服器回應格式為陣列，每個元素為 {state: true/false}）
+    if (Array.isArray(rs)) {
+      // 計算成功和失敗的數量
+      const successCount = rs.filter(item => item?.state === true).length
+      const failCount = rs.filter(item => item?.state === false || item?.state === 0).length
+      
+      if (successCount > 0 && failCount === 0) {
+        // 全部成功
+        let successMessage = `已成功匯入 ${successCount} 筆資料`
+        if (skippedCount > 0) {
+          successMessage += `\n（已跳過 ${skippedCount} 筆已存在的資料）`
+        }
+        
+        proxy.$swal({
+          icon: 'success',
+          title: '匯入成功',
+          text: successMessage,
+          confirmButtonText: '確定',
+          confirmButtonColor: '#3085d6'
+        })
+        
+        // 關閉對話框並刷新資料
+        closeDialog()
+        emit('getAllData')
+      } else if (successCount > 0 && failCount > 0) {
+        // 部分成功
+        proxy.$swal({
+          icon: 'warning',
+          title: '部分匯入成功',
+          text: `成功匯入 ${successCount} 筆資料\n失敗 ${failCount} 筆資料${skippedCount > 0 ? `\n（已跳過 ${skippedCount} 筆已存在的資料）` : ''}`,
+          confirmButtonText: '確定',
+          confirmButtonColor: '#3085d6'
+        })
+      } else if (successCount === 0 && failCount > 0) {
+        // 全部失敗
+        proxy.$swal({
+          icon: 'error',
+          title: '匯入失敗',
+          text: `所有 ${failCount} 筆資料匯入失敗`,
+          confirmButtonText: '確定',
+          confirmButtonColor: '#3085d6'
+        })
+      } else {
+        // 沒有回應或格式異常
+        proxy.$swal({
+          icon: 'warning',
+          title: '匯入完成',
+          text: '匯入完成但沒有資料被處理',
+          confirmButtonText: '確定',
+          confirmButtonColor: '#3085d6'
+        })
       }
-      
-      proxy.$swal({
-        icon: 'success',
-        title: '匯入成功',
-        text: successMessage,
-        confirmButtonText: '確定',
-        confirmButtonColor: '#3085d6'
-      })
-      
-      // 關閉對話框並刷新資料
-      closeDialog()
-      emit('getAllData')
-    } else if (rs.ok && rs.rowsInserted === 0) {
-      proxy.$swal({
-        icon: 'warning',
-        title: '匯入完成',
-        text: '匯入成功但沒有資料被寫入',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#3085d6'
-      })
     } else {
+      // 回應格式不符合預期
       proxy.$swal({
         icon: 'error',
         title: '匯入失敗',
-        text: `匯入失敗: ${JSON.stringify(rs)}`,
+        text: `伺服器回應格式異常: ${JSON.stringify(rs)}`,
         confirmButtonText: '確定',
         confirmButtonColor: '#3085d6'
       })
