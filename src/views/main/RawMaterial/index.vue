@@ -228,7 +228,7 @@ const childFn = ref(null)
 
 // 響應式數據
 const items = ref([])
-const usingDatabase = ref("rawMaterial")
+const usingDatabase = ref("raw_material")
 const searchKey = ref("")
 const auth = ref("")
 

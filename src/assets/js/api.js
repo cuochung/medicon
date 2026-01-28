@@ -232,6 +232,38 @@ var api = {
       console.log('err', err)
     }
   },
+
+  // Rust 伺服器新增多筆資料
+  // rustAddMulti: 發送資料到 Rust 伺服器
+  async rustAddMulti(sheetName, data) {
+    console.log('run rustAddMulti', sheetName)
+    try {
+      // 從 store 取得 Rust 伺服器的設定
+      const rustBaseURL = store.state.rustBaseURL
+
+      // 組裝 requestBody
+      const requestBody = {
+        apiToken: store.state.rustApiToken,
+        databaseName: store.state.databaseName,
+        sheetName: sheetName,
+        data: data
+      }
+
+      // 建立完整的 URL
+      const url = `${rustBaseURL}/ingest`
+
+      // 使用 axios 直接發送請求（不使用 instance，因為 baseURL 不同）
+      const response = await axios.post(url, requestBody, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      return response.data
+    } catch (err) {
+      console.log('rustAddMulti err', err)
+      throw err
+    }
+  },
 }
 
 export default api;

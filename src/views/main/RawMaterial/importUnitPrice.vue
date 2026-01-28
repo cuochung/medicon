@@ -500,7 +500,7 @@ const parseExcelFile = (file) => {
 const queryAndCompareMaterials = async () => {
   try {
     // 查詢所有原料資料
-    const rs = await api.get('rawMaterial')
+    const rs = await api.get('raw_material')
     
     if (rs && rs.length > 0) {
       // 建立原料料號到原料資料的映射表
@@ -651,7 +651,7 @@ const processImport = async () => {
     console.log('準備更新的資料:', updatePayload)
     
     // 使用 editMulti API 更新資料
-    const rs = await api.options(`general/editMulti/${store.state.databaseName}/rawMaterial`, updatePayload)
+    const rs = await api.options(`general/editMulti/${store.state.databaseName}/raw_material`, updatePayload)
     
     console.log('API 回應:', rs)
     

@@ -348,7 +348,7 @@ const processImport = async () => {
     const existingDataPayload = {
       columns: 'materialNumber'
     }
-    const existingDataResponse = await api.options(`general/getByColumns/${store.state.databaseName}/rawMaterial`, existingDataPayload)
+    const existingDataResponse = await api.options(`general/getByColumns/${store.state.databaseName}/raw_material`, existingDataPayload)
     console.log('existingDataResponse', existingDataResponse)
    
     // 從回應中提取已存在的 materialNumber 列表
@@ -493,40 +493,19 @@ const processImport = async () => {
     console.log('資料筆數:', newDatas.length)
     console.log('Payload:', payload)
 
-    const rs = await api.options(`general/addMulti/${store.state.databaseName}/rawMaterial`, payload)
+    // 使用 CI 伺服器新增多筆資料(沒開下面那個Rust伺服器時可以用)
+    const rs = await api.options(`general/addMulti/${store.state.databaseName}/raw_material`, payload)
+    
+    // 使用 Rust 伺服器新增多筆資料
+    // const rs = await api.rustAddMulti('raw_material', payload)
     
     console.log('API 回應:', rs)
-    console.log('回應類型:', typeof rs)
-    console.log('是否為陣列:', Array.isArray(rs))
     
     loading.value = false
     
-    // 檢查回應結果
-    if (!rs) {
-      proxy.$swal({
-        icon: 'error',
-        title: '匯入失敗',
-        text: '伺服器沒有返回回應，請檢查網路連線或稍後再試',
-        confirmButtonText: '確定',
-        confirmButtonColor: '#3085d6'
-      })
-      return
-    }
-    
-    const hasError = Array.isArray(rs) && rs.some((item) => item?.state === 0)
-    
-    if (hasError) {
-      const errorItems = Array.isArray(rs) ? rs.filter((item) => item?.state === 0) : []
-      console.error('匯入錯誤的項目:', errorItems)
-      proxy.$swal({
-        icon: 'error',
-        title: '匯入過程發生錯誤',
-        text: `部分資料可能未能成功匯入。\n錯誤項目數: ${errorItems.length}`,
-        confirmButtonText: '確定',
-        confirmButtonColor: '#3085d6'
-      })
-    } else {
-      let successMessage = `已成功匯入 ${newDatas.length} 筆資料`
+    // 判斷回應結果
+    if (rs.ok && rs.rowsInserted > 0) {
+      let successMessage = `已成功匯入 ${rs.rowsInserted} 筆資料`
       if (skippedCount > 0) {
         successMessage += `\n（已跳過 ${skippedCount} 筆已存在的資料）`
       }
@@ -542,6 +521,22 @@ const processImport = async () => {
       // 關閉對話框並刷新資料
       closeDialog()
       emit('getAllData')
+    } else if (rs.ok && rs.rowsInserted === 0) {
+      proxy.$swal({
+        icon: 'warning',
+        title: '匯入完成',
+        text: '匯入成功但沒有資料被寫入',
+        confirmButtonText: '確定',
+        confirmButtonColor: '#3085d6'
+      })
+    } else {
+      proxy.$swal({
+        icon: 'error',
+        title: '匯入失敗',
+        text: `匯入失敗: ${JSON.stringify(rs)}`,
+        confirmButtonText: '確定',
+        confirmButtonColor: '#3085d6'
+      })
     }
   } catch (error) {
     loading.value = false

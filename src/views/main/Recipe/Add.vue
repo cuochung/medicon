@@ -407,7 +407,7 @@ const editProcess = (item) => {
 // 載入原料列表
 const loadMaterials = async () => {
   try {
-    const rs = await api.get('rawMaterial')
+    const rs = await api.get('raw_material')
     if (rs && rs.length > 0) {
       materialList.value = rs.map(item => {
         const data = JSON.parse(item.datalist)
