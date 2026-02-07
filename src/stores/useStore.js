@@ -3,13 +3,13 @@ import { defineStore } from 'pinia'
 
 export const useStore = defineStore('company', () => {
 
-  let setBaseUrl = 'http://localhost'; //地區測試
-  // const setBaseUrl = 'https://www.pddtvgame.com'; //線上主機
+  // let setBaseUrl = 'http://localhost'; //地區測試
+  const setBaseUrl = 'https://www.pddtvgame.com'; //線上主機
   // const setBaseUrl = 'https://www.pddtech.online'; //線上二號機
 
 
   const state = {
-    verMsg: "2026.1.18.1",
+    verMsg: "2026.2.7.1",
     databaseName: "medicon", //資料庫名
     base_url: `${setBaseUrl}/mediconapi`, //線上專用指定去讀圖片或其他東西的位置
 
@@ -39,7 +39,7 @@ export const useStore = defineStore('company', () => {
         label: "原料管理", class: "ma-1 white--text", color: "primary", keyName: 'RawMaterial',
         image: new URL('@/assets/img/job_chinretsu_man.png', import.meta.url).href,
         route: "/main/RawMaterial",
-        authKey: "ingredient_key",
+        authKey: "RawMaterial_key",
         icon: 'mdi-bottle-tonic-outline',
       },
       {
@@ -63,6 +63,14 @@ export const useStore = defineStore('company', () => {
         authKey: "order_key",
         icon: 'mdi-account',
       },
+
+      {
+        label: "會員儲值", class: "ma-1 white--text", color: "success", keyName: 'wallet',
+        image: new URL('@/assets/img/saifu_gamaguchi.png', import.meta.url).href,
+        route: "/main/Wallet",
+        authKey: "wallet_key",
+        icon: 'mdi-wallet',
+      },
       
       {
         label: "人員管理", class: "ma-1 white--text", color: "purple", keyName: 'personnel',
@@ -71,13 +79,7 @@ export const useStore = defineStore('company', () => {
         authKey: "personnel_key",
         icon: 'mdi-account',
       },
-      {
-        label: "會員儲值", class: "ma-1 white--text", color: "success", keyName: 'wallet',
-        image: new URL('@/assets/img/saifu_gamaguchi.png', import.meta.url).href,
-        route: "/main/Wallet",
-        authKey: "wallet_key",
-        icon: 'mdi-wallet',
-      },
+      
 
       {
         label: "登出", class: "ma-1 white--text", color: "dark", keyName: 'exit',

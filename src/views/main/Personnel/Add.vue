@@ -275,20 +275,31 @@ const editOK = async () => {
   }
 }
 
+// 取得表單中實際顯示的權限 key（排除 exit）
+const formAuthKeys = computed(() =>
+  filterAuthKeys.value.filter((i) => i.keyName !== 'exit')
+)
+
 const authSelectAll = () => {
-  for (let key in list.value) {
-    if (key.includes("_key")) {
-      list.value[key] = "true"
+  const updates = {}
+  for (const auth of formAuthKeys.value) {
+    updates[`${auth.keyName}_key`] = 'true'
+    for (const opt of permissionOptions) {
+      updates[`${auth.keyName}_${opt.suffix}`] = 'true'
     }
   }
+  list.value = { ...list.value, ...updates }
 }
 
 const authCancelAll = () => {
-  for (let key in list.value) {
-    if (key.includes("_key")) {
-      list.value[key] = ""
+  const updates = {}
+  for (const auth of formAuthKeys.value) {
+    updates[`${auth.keyName}_key`] = ''
+    for (const opt of permissionOptions) {
+      updates[`${auth.keyName}_${opt.suffix}`] = ''
     }
   }
+  list.value = { ...list.value, ...updates }
 }
 
 defineExpose({
