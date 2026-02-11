@@ -1,3 +1,23 @@
+# 2026-02-11 工作記錄
+
+## 主要工作內容
+
+### 客戶匯入：已存在且內容不同時改為更新
+- **importCustomer.vue**
+  - 當客戶編號已存在於資料庫但**內容不同**時，改為使用 **editMulti** 更新該筆資料（不再只跳過）。
+  - 流程調整：
+    - 改為呼叫 `api.get('customer')` 取得完整客戶列表（含 `snkey`、`datalist`），以客戶編號建立 Map。
+    - 每筆 Excel 列分類為：**新增**（編號不存在）、**更新**（編號存在且內容不同）、**跳過**（編號存在且內容相同）。
+  - 內容比對：除 `customerNumber` 外，依 `fieldMapping` 所有欄位（客戶全稱、業務人員、聯絡人、電話、地址等）比對；空值正規化後比較。
+  - 同一 Excel 內重複客戶編號時，僅保留最後一筆作為更新來源。
+  - 更新 payload：合併既有資料與 Excel 欄位、保留 `createInfo`、在 `editInfo` 前插入一筆修改紀錄，呼叫 `general/editMulti/${databaseName}/customer`。
+  - 確認與成功訊息改為顯示「新增 X 筆、更新 Y 筆、跳過 Z 筆（內容相同）」。
+
+## 修改的檔案清單
+- `src/views/main/Customer/importCustomer.vue`
+
+---
+
 # 2026-01-28 工作記錄
 
 ## 主要工作內容

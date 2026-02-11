@@ -181,6 +181,17 @@ const fieldMapping = {
   '備註': 'notes'
 }
 
+// 用於比對內容的欄位（不含 customerNumber，因已用於判斷是否同一筆）
+const compareFields = Object.values(fieldMapping).filter((k) => k !== 'customerNumber')
+
+/** 正規化欄位值供比對 */
+const norm = (v) => (v != null && v !== '' ? String(v).trim() : '')
+
+/** 兩筆資料內容是否不同（只比對 compareFields） */
+const isContentDifferent = (existing, excelRow) => {
+  return compareFields.some((key) => norm(existing[key]) !== norm(excelRow[key]))
+}
+
 // Validation rules
 const fileRules = [
   (v) => !!v || '請選擇 Excel 檔案',
@@ -330,141 +341,160 @@ const processImport = async () => {
   }
 
   loading.value = true
-  
+
   try {
-    // 先取得資料庫中已存在的 customerNumber
-    const existingDataPayload = {
-      columns: 'customerNumber'
-    }
-    const existingDataResponse = await api.options(`general/getByColumns/${store.state.databaseName}/customer`, existingDataPayload)
-    console.log('existingDataResponse', existingDataResponse)
-   
-    // 從回應中提取已存在的 customerNumber 列表
-    const existingCustomerNumbers = new Set()
-    if (Array.isArray(existingDataResponse)) {
-      existingDataResponse.forEach((item) => {
+    // 取得資料庫中所有客戶（含 snkey、datalist）以比對內容並組更新 payload
+    const allCustomers = await api.get('customer')
+    const existingByNumber = new Map()
+    if (Array.isArray(allCustomers)) {
+      allCustomers.forEach((item) => {
         try {
-          let customerNumber = null
-          
-          // 如果直接有 customerNumber 欄位
-          if (item.customerNumber) {
-            customerNumber = String(item.customerNumber).trim()
-          } 
-          // 如果需要從 datalist 解析
-          else if (item.datalist) {
-            const parsedData = JSON.parse(item.datalist || '{}')
-            if (parsedData.customerNumber) {
-              customerNumber = String(parsedData.customerNumber).trim()
-            }
-          }
-          
-          if (customerNumber) {
-            existingCustomerNumbers.add(customerNumber)
-          }
-        } catch (error) {
-          console.warn('解析已存在資料時發生錯誤:', error)
+          const parsed = { ...JSON.parse(item.datalist || '{}'), snkey: item.snkey }
+          const num = parsed.customerNumber ? String(parsed.customerNumber).trim() : ''
+          if (num) existingByNumber.set(num, parsed)
+        } catch (e) {
+          console.warn('解析客戶資料時發生錯誤:', e)
         }
       })
     }
-    
-    console.log('已存在的 customerNumber:', Array.from(existingCustomerNumbers))
 
-    // 過濾出不存在於資料庫中的資料
-    const newDatas = datas.value.filter((item) => {
-      const customerNumber = item.customerNumber ? String(item.customerNumber).trim() : ''
-      return customerNumber && !existingCustomerNumbers.has(customerNumber)
+    const newDatas = []
+    const toUpdateMap = new Map() // customerNumber -> { existing, excelRow }，同一編號只保留最後一筆
+
+    datas.value.forEach((excelRow) => {
+      const num = excelRow.customerNumber ? String(excelRow.customerNumber).trim() : ''
+      if (!num) return
+
+      const existing = existingByNumber.get(num)
+      if (!existing) {
+        newDatas.push(excelRow)
+        return
+      }
+      if (isContentDifferent(existing, excelRow)) {
+        toUpdateMap.set(num, { existing, excelRow })
+      }
     })
-    
-    const skippedCount = datas.value.length - newDatas.length
-    
+
+    const toUpdate = Array.from(toUpdateMap.values())
+    const sameContentCount = datas.value.filter((row) => {
+      const num = row.customerNumber ? String(row.customerNumber).trim() : ''
+      return num && existingByNumber.has(num) && !toUpdateMap.has(num)
+    }).length
+
     console.log('原始資料筆數:', datas.value.length)
-    console.log('新資料筆數:', newDatas.length)
-    console.log('跳過筆數（已存在）:', skippedCount)
-    
-    // 如果沒有新資料需要匯入
-    if (newDatas.length === 0) {
+    console.log('新增筆數:', newDatas.length)
+    console.log('更新筆數（已存在且內容不同）:', toUpdate.length)
+    console.log('跳過筆數（已存在且內容相同）:', sameContentCount)
+
+    if (newDatas.length === 0 && toUpdate.length === 0) {
       loading.value = false
+      let text = '沒有新資料需要匯入'
+      if (sameContentCount > 0) {
+        text += `，且已存在的 ${sameContentCount} 筆資料內容皆相同，無需更新。`
+      } else {
+        text += '（無有效客戶編號或客戶編號皆已存在且內容相同）。'
+      }
       proxy.$swal({
         icon: 'info',
-        title: '沒有新資料需要匯入',
-        text: `所有 ${datas.value.length} 筆資料的客戶編號都已存在於資料庫中`,
+        title: '無需匯入或更新',
+        text,
         confirmButtonText: '確定',
         confirmButtonColor: '#3085d6'
       })
       return
     }
-    
-    // 如果有部分資料已存在，提示用戶
-    if (skippedCount > 0) {
-      const shouldContinue = await proxy.$swal({
-        icon: 'warning',
-        title: '發現重複資料',
-        text: `共有 ${skippedCount} 筆資料的客戶編號已存在，將跳過這些資料。\n將匯入 ${newDatas.length} 筆新資料。\n是否繼續？`,
-        toast: false,
-        timer: null,
-        showConfirmButton: true,
-        showCancelButton: true,
-        position: 'center'
-      })
-      
-      if (!shouldContinue.isConfirmed) {
-        loading.value = false
-        return
-      }
+
+    const confirmParts = []
+    if (newDatas.length > 0) confirmParts.push(`新增 ${newDatas.length} 筆`)
+    if (toUpdate.length > 0) confirmParts.push(`更新 ${toUpdate.length} 筆（客戶編號已存在但內容不同）`)
+    if (sameContentCount > 0) confirmParts.push(`跳過 ${sameContentCount} 筆（已存在且內容相同）`)
+
+    const shouldContinue = await proxy.$swal({
+      icon: 'warning',
+      title: '確認匯入',
+      text: `將${confirmParts.join('、')}。\n是否繼續？`,
+      toast: false,
+      timer: null,
+      showConfirmButton: true,
+      showCancelButton: true,
+      position: 'center'
+    })
+
+    if (!shouldContinue.isConfirmed) {
+      loading.value = false
+      return
     }
-    
-    // 構建 payload 陣列，每個元素包含 datalist（JSON字符串）
-    const payload = newDatas.map((item) => {
-      return {
+
+    let addResult = null
+    let editResult = null
+
+    if (newDatas.length > 0) {
+      const payload = newDatas.map((item) => ({
         customerNumber: item.customerNumber,
         datalist: JSON.stringify({
           ...item,
           createInfo: {
             snkey: store.state.pData.snkey,
             name: store.state.pData.username,
-            time: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+            time: dayjs().format('YYYY-MM-DD HH:mm:ss')
           },
-          editInfo: [],
+          editInfo: []
         })
-      }
-    })
+      }))
+      addResult = await api.options(`general/addMulti/${store.state.databaseName}/customer`, payload)
+    }
 
-    console.log('要匯入的資料:', newDatas)
-    console.log('資料筆數:', newDatas.length)
-    console.log('Payload:', payload)
+    if (toUpdate.length > 0) {
+      const updatePayload = toUpdate.map(({ existing, excelRow }) => {
+        const merged = { ...existing, ...excelRow }
+        merged.createInfo = existing.createInfo || {}
+        merged.editInfo = Array.isArray(existing.editInfo) ? [...existing.editInfo] : []
+        merged.editInfo.unshift({
+          snkey: store.state.pData.snkey,
+          name: store.state.pData.username,
+          time: dayjs().format('YYYY-MM-DD HH:mm:ss')
+        })
+        return {
+          snkey: existing.snkey,
+          customerNumber: existing.customerNumber,
+          datalist: JSON.stringify(merged),
+          updateTime: dayjs().format('YYYY-MM-DD HH:mm:ss')
+        }
+      })
+      editResult = await api.options(`general/editMulti/${store.state.databaseName}/customer`, updatePayload)
+    }
 
-    const rs = await api.options(`general/addMulti/${store.state.databaseName}/customer`, payload)
     loading.value = false
-    
-    // 檢查回應結果
-    const hasError = Array.isArray(rs) && rs.some((item) => item?.state === 0)
-    
-    if (hasError) {
+
+    const addHasError = Array.isArray(addResult) && addResult.some((item) => item?.state === 0)
+    const editHasError = Array.isArray(editResult) && editResult.some((item) => item?.state === 0)
+
+    if (addHasError || editHasError) {
       proxy.$swal({
         icon: 'error',
-        title: '匯入過程發生錯誤',
-        text: '部分資料可能未能成功匯入，請稍後再試',
+        title: '匯入／更新過程發生錯誤',
+        text: '部分資料可能未能成功匯入或更新，請稍後再試',
         confirmButtonText: '確定',
         confirmButtonColor: '#3085d6'
       })
-    } else {
-      let successMessage = `已成功匯入 ${newDatas.length} 筆資料`
-      if (skippedCount > 0) {
-        successMessage += `\n（已跳過 ${skippedCount} 筆已存在的資料）`
-      }
-      
-      proxy.$swal({
-        icon: 'success',
-        title: '匯入成功',
-        text: successMessage,
-        confirmButtonText: '確定',
-        confirmButtonColor: '#3085d6'
-      })
-      
-      // 關閉對話框並刷新資料
-      closeDialog()
-      emit('getAllData')
+      return
     }
+
+    const successParts = []
+    if (newDatas.length > 0) successParts.push(`匯入 ${newDatas.length} 筆`)
+    if (toUpdate.length > 0) successParts.push(`更新 ${toUpdate.length} 筆`)
+    if (sameContentCount > 0) successParts.push(`跳過 ${sameContentCount} 筆（內容相同）`)
+
+    proxy.$swal({
+      icon: 'success',
+      title: '完成',
+      text: `已成功${successParts.join('、')}`,
+      confirmButtonText: '確定',
+      confirmButtonColor: '#3085d6'
+    })
+
+    closeDialog()
+    emit('getAllData')
   } catch (error) {
     loading.value = false
     console.error('匯入錯誤:', error)
