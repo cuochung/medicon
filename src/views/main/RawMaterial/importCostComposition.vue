@@ -215,8 +215,10 @@
                             <thead>
                               <tr>
                                 <th class="text-left">項次</th>
-                                <th class="text-left">Composition</th>
+                                <th class="text-left">成分 (Breakdown INCI Name)</th>
                                 <th class="text-left">wt%</th>
+                                <th class="text-left">CAS NO.</th>
+                                <th class="text-left">Function</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -224,6 +226,8 @@
                                 <td class="text-left">{{ comp.itemNumber }}</td>
                                 <td class="text-left">{{ comp.composition }}</td>
                                 <td class="text-left">{{ comp.wtPercent }}</td>
+                                <td class="text-left">{{ comp.casNo || '-' }}</td>
+                                <td class="text-left">{{ comp.ingredientFunction || '-' }}</td>
                               </tr>
                             </tbody>
                           </v-table>
@@ -301,14 +305,17 @@ const existingMaterials = ref(new Map()) // 現有原料資料映射表：Map<ma
 const comparisonResults = ref([]) // 比對結果
 const expandedRows = ref(new Set()) // 展開的行索引集合
 
-// 欄位映射：中文欄位名 -> 英文欄位名
+// 欄位映射：中文欄位名 -> 英文欄位名（成分欄位優先使用 Breakdown INCI Name）
 const fieldMapping = {
   '項次': 'itemNumber',
   '分類': 'category',
   '原料料號': 'materialNumber',
   '原料名稱': 'materialName',
   'Composition': 'composition',
-  'wt%': 'wtPercent'
+  'wt%': 'wtPercent',
+  'Breakdown INCI Name': 'breakdownInciName',
+  'Function': 'ingredientFunction',
+  '功能': 'ingredientFunction'
 }
 
 // Validation rules
@@ -417,33 +424,35 @@ const parseExcelFile = (file) => {
         // 建立欄位索引映射
         const headerIndexMap = {}
         cleanedHeaders.forEach((header, index) => {
-          if (fieldMapping[header]) {
-            headerIndexMap[fieldMapping[header]] = index
+          const trimmed = header ? String(header).trim() : ''
+          if (fieldMapping[trimmed]) {
+            headerIndexMap[fieldMapping[trimmed]] = index
           } else {
-            if (header.includes('Breakdown INCI Name')) {
-              if (!headerIndexMap['breakdownInciName']) {
+            if (trimmed.includes('Breakdown INCI Name')) {
+              if (headerIndexMap['breakdownInciName'] === undefined) {
                 headerIndexMap['breakdownInciName'] = index
               }
-            } else if (header.includes('CAS NO') || header.includes('CAS NO.')) {
-              if (!headerIndexMap['casNo']) {
+            } else if (trimmed.includes('CAS NO') || trimmed.includes('CAS NO.') || trimmed === 'CAS#') {
+              if (headerIndexMap['casNo'] === undefined) {
                 headerIndexMap['casNo'] = index
+              }
+            } else if (trimmed.includes('Function') || trimmed === '功能') {
+              if (headerIndexMap['ingredientFunction'] === undefined) {
+                headerIndexMap['ingredientFunction'] = index
               }
             }
           }
         })
         
-        // 檢查必要欄位
-        const coreFields = ['項次', '原料料號', 'Composition', 'wt%']
+        // 檢查必要欄位：成分需有「Breakdown INCI Name」或「Composition」其一
+        const hasBreakdownInci = cleanedHeaders.some(h => String(h || '').trim().includes('Breakdown INCI Name'))
+        const hasComposition = cleanedHeaders.some(h => String(h || '').trim() === 'Composition')
+        const hasIngredientColumn = hasBreakdownInci || hasComposition
         const missingFields = []
-        coreFields.forEach(fieldName => {
-          const found = cleanedHeaders.some(h => {
-            const cleaned = String(h).trim()
-            return cleaned === fieldName || (fieldName === 'Composition' && cleaned === 'Composition')
-          })
-          if (!found) {
-            missingFields.push(fieldName)
-          }
-        })
+        if (!hasIngredientColumn) missingFields.push('Breakdown INCI Name 或 Composition')
+        if (!cleanedHeaders.some(h => String(h || '').trim() === '項次')) missingFields.push('項次')
+        if (!cleanedHeaders.some(h => String(h || '').trim() === '原料料號')) missingFields.push('原料料號')
+        if (!cleanedHeaders.some(h => String(h || '').trim() === 'wt%')) missingFields.push('wt%')
         
         if (missingFields.length > 0) {
           const actualHeaders = cleanedHeaders.filter(h => h).join(', ')
@@ -467,19 +476,26 @@ const parseExcelFile = (file) => {
             continue
           }
           
-          // 讀取欄位值
+          // 讀取欄位值（成分優先使用 Breakdown INCI Name，若無則用 Composition）
           const itemNumberIndex = headerIndexMap['itemNumber']
           const materialNumberIndex = headerIndexMap['materialNumber']
           const materialNameIndex = headerIndexMap['materialName']
           const categoryIndex = headerIndexMap['category']
+          const breakdownInciIndex = headerIndexMap['breakdownInciName']
           const compositionIndex = headerIndexMap['composition']
           const wtPercentIndex = headerIndexMap['wtPercent']
+          const casNoIndex = headerIndexMap['casNo']
+          const functionIndex = headerIndexMap['ingredientFunction']
           
           const itemNumber = row[itemNumberIndex] ? String(row[itemNumberIndex]).trim() : ''
           const materialNumber = row[materialNumberIndex] ? String(row[materialNumberIndex]).trim() : ''
           const materialName = row[materialNameIndex] ? String(row[materialNameIndex]).trim() : ''
           const category = row[categoryIndex] ? String(row[categoryIndex]).trim() : ''
-          const composition = row[compositionIndex] ? String(row[compositionIndex]).trim() : ''
+          const compositionFromBreakdown = (breakdownInciIndex !== undefined && row[breakdownInciIndex] != null) ? String(row[breakdownInciIndex]).trim() : ''
+          const compositionFromCol = (compositionIndex !== undefined && row[compositionIndex] != null) ? String(row[compositionIndex]).trim() : ''
+          const composition = compositionFromBreakdown || compositionFromCol
+          const casNo = (casNoIndex !== undefined && row[casNoIndex] != null) ? String(row[casNoIndex]).trim() : ''
+          const ingredientFunction = (functionIndex !== undefined && row[functionIndex] != null) ? String(row[functionIndex]).trim() : ''
           let wtPercent = row[wtPercentIndex] ? String(row[wtPercentIndex]).trim() : ''
           
           // 處理 wt% - Excel 百分比格式轉換
@@ -530,11 +546,14 @@ const parseExcelFile = (file) => {
             return
           }
           
-          // 建立 Composition 物件
+          // 建立 Composition 物件（含 CAS NO.、Function，顏色由表單後續選擇）
           const compositionData = {
             itemNumber: itemNumber,
             composition: composition,
-            wtPercent: wtPercent
+            wtPercent: wtPercent,
+            casNo: casNo,
+            ingredientFunction: ingredientFunction,
+            color: ''
           }
           
           // 加入到當前原料分組

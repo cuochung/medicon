@@ -161,10 +161,12 @@
                             </v-chip>
                           </span>
                         </template>
-                        <div style="max-width: 400px;">
-                          <div v-for="(comp, idx) in item.raw.compositions" :key="idx" class="mb-1">
+                        <div style="max-width: 480px;">
+                          <div v-for="(comp, idx) in item.raw.compositions" :key="idx" class="mb-1" :style="comp.color ? { color: comp.color } : {}">
                             <strong>{{ comp.itemNumber }}.</strong> {{ comp.composition }}
                             <span v-if="comp.wtPercent"> ({{ formatWtPercent(comp.wtPercent) }})</span>
+                            <span v-if="comp.casNo" class="text-caption ml-1">CAS: {{ comp.casNo }}</span>
+                            <span v-if="comp.ingredientFunction" class="text-caption ml-1">｜{{ comp.ingredientFunction }}</span>
                           </div>
                         </div>
                       </v-tooltip>

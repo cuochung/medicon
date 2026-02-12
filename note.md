@@ -1,3 +1,50 @@
+# 2026-02-12 工作記錄
+
+## 主要工作內容
+
+### 匯入成分組成功能調整（importCostComposition.vue）
+1. **成分欄位改為優先抓取 Breakdown INCI Name**
+   - 讀取邏輯：優先使用 Excel 欄位「Breakdown INCI Name」，若為空再使用「Composition」。
+   - 必要欄位改為：至少要有「Breakdown INCI Name」或「Composition」其一，加上項次、原料料號、wt%。
+
+2. **CAS NO. 抓取**
+   - 支援辨識表頭「CAS NO」、「CAS NO.」、「CAS#」，並將每列該欄位寫入每筆成分的 `casNo`。
+
+3. **Function 欄位抓取**
+   - 支援辨識表頭「Function」或「功能」，並將每列該欄位寫入每筆成分的 `ingredientFunction`（因 `function` 為 JS 保留字故用此名稱）。
+
+4. **預覽表格**
+   - 詳細表格新增「CAS NO.」、「Function」欄位；表頭「Composition」改為「成分 (Breakdown INCI Name)」。
+
+5. **每筆成分資料結構**
+   - 匯入後每筆成分包含：`itemNumber`、`composition`、`wtPercent`、`casNo`、`ingredientFunction`、`color`（顏色由表單後續選擇）。
+
+### 原料新增/編輯（Add.vue）— 成分組成
+1. **新增欄位**
+   - 表格新增「CAS NO.」、「Function」、「字體顏色」欄。
+   - 項次、成分、wt%、CAS NO.、Function、字體顏色、操作。
+
+2. **字體顏色選擇**
+   - 每筆成分可點擊色筆圖示，以 v-color-picker 選擇字體顏色（色票 + hex 輸入），可清除顏色。
+   - 儲存於每筆成分的 `color`（hex，如 #2196F3）。
+
+3. **表格 overflow 與欄寬**
+   - 成分組成表格外層加上 `.compositions-table-wrap`：`max-height: 320px`、`overflow: auto`，表頭設為 sticky 捲動時固定。
+   - CAS NO. 欄寬 170px、Function 欄寬 180px。
+
+4. **新增一筆成分時**
+   - 預設帶入 `casNo`、`ingredientFunction`、`color`（空字串）。
+
+### 原料列表（index.vue）
+- 成分組成 tooltip 中顯示每筆成分的 CAS（若有）、Function（若有），若有設定 `color` 則以該顏色顯示成分文字。
+
+## 修改的檔案清單
+- `src/views/main/RawMaterial/importCostComposition.vue`
+- `src/views/main/RawMaterial/Add.vue`
+- `src/views/main/RawMaterial/index.vue`
+
+---
+
 # 2026-02-11 工作記錄
 
 ## 主要工作內容

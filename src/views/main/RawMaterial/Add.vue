@@ -275,13 +275,16 @@
                 尚未新增任何成分組成資料，請點擊「新增成分」按鈕開始新增
               </v-alert>
 
-              <div v-else class="mt-3">
+              <div v-else class="mt-3 compositions-table-wrap">
                 <v-table density="comfortable" class="compositions-table elevation-2">
                   <thead>
                     <tr>
                       <th class="text-center" style="width: 90px;">項次</th>
-                      <th class="text-left">Composition</th>
-                      <th class="text-left" style="width: 140px;">wt%</th>
+                      <th class="text-left">成分 (Breakdown INCI Name)</th>
+                      <th class="text-left" style="width: 120px;">wt%</th>
+                      <th class="text-left" style="width: 170px;">CAS NO.</th>
+                      <th class="text-left" style="width: 180px;">Function</th>
+                      <th class="text-center" style="width: 100px;">字體顏色</th>
                       <th class="text-center" style="width: 80px;">操作</th>
                     </tr>
                   </thead>
@@ -309,6 +312,56 @@
                           hide-details
                           placeholder="100%"
                         ></v-text-field>
+                      </td>
+                      <td>
+                        <v-text-field
+                          v-model="comp.casNo"
+                          density="compact"
+                          variant="outlined"
+                          hide-details
+                          placeholder="CAS 編號"
+                        ></v-text-field>
+                      </td>
+                      <td>
+                        <v-text-field
+                          v-model="comp.ingredientFunction"
+                          density="compact"
+                          variant="outlined"
+                          hide-details
+                          placeholder="功能"
+                        ></v-text-field>
+                      </td>
+                      <td class="text-center">
+                        <v-menu location="bottom" :close-on-content-click="false">
+                          <template v-slot:activator="{ props: menuProps }">
+                            <v-btn
+                              v-bind="menuProps"
+                              size="small"
+                              variant="outlined"
+                              :style="comp.color ? { color: comp.color, borderColor: comp.color } : {}"
+                              icon="mdi-format-color-text"
+                            ></v-btn>
+                          </template>
+                          <v-sheet class="pa-3" min-width="200">
+                            <div class="text-caption mb-2">選擇字體顏色</div>
+                            <v-color-picker
+                              :model-value="comp.color"
+                              hide-inputs
+                              mode="hex"
+                              show-swatches
+                              :swatches="colorSwatches"
+                              @update:model-value="comp.color = (typeof $event === 'string' ? $event : ($event && $event.hex)) || ''"
+                            ></v-color-picker>
+                            <v-text-field
+                              v-model="comp.color"
+                              density="compact"
+                              placeholder="#000000"
+                              class="mt-2"
+                              hide-details
+                            ></v-text-field>
+                            <v-btn size="small" variant="text" block class="mt-2" @click="comp.color = ''">清除顏色</v-btn>
+                          </v-sheet>
+                        </v-menu>
                       </td>
                       <td class="text-center">
                         <v-tooltip text="刪除此成分" location="top">
@@ -394,6 +447,14 @@ const titleStyle = ref('')
 const form = ref(null)
 const supplierList = ref([]) // 供應商列表
 const selectedSuppliers = ref([]) // 當前選擇的供應商（多選）
+// 字體顏色預設色票（成分組成用）
+const colorSwatches = [
+  ['#000000', '#424242', '#757575', '#BDBDBD'],
+  ['#F44336', '#E91E63', '#9C27B0', '#673AB7'],
+  ['#3F51B5', '#2196F3', '#03A9F4', '#00BCD4'],
+  ['#009688', '#4CAF50', '#8BC34A', '#CDDC39'],
+  ['#FFEB3B', '#FFC107', '#FF9800', '#FF5722']
+]
 
 // Validation rules
 const emptyRules = [(v) => !!v || "不可空白"]
@@ -492,7 +553,10 @@ const addComposition = () => {
   list.value.compositions.push({
     itemNumber: nextItemNumber.toString(),
     composition: '',
-    wtPercent: ''
+    wtPercent: '',
+    casNo: '',
+    ingredientFunction: '',
+    color: ''
   })
 }
 
@@ -683,14 +747,25 @@ defineExpose({
   }
 }
 
+.compositions-table-wrap {
+  max-height: 320px;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(46, 125, 50, 0.2);
+}
+
 .compositions-table {
   background: white;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(46, 125, 50, 0.2);
+  border: none;
   
   thead {
     background: linear-gradient(135deg, rgba(46, 125, 50, 0.15) 0%, rgba(46, 125, 50, 0.08) 100%);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    box-shadow: 0 1px 0 rgba(46, 125, 50, 0.2);
   }
   
   th {
