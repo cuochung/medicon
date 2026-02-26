@@ -1,6 +1,6 @@
 <template>
   <div class="raw-material-add">
-    <v-dialog v-model="dialog" max-width="1200" persistent>
+    <v-dialog v-model="dialog" max-width="96vw" persistent>
       <template #activator="{ props }">
         <v-btn v-bind="props" class="raw-material-add-btn" color="primary" variant="elevated"
           prepend-icon="mdi-flask-plus" rounded="pill" elevation="6" @click="addProcess">
@@ -280,10 +280,11 @@
                   <thead>
                     <tr>
                       <th class="text-center" style="width: 90px;">項次</th>
-                      <th class="text-left">成分 (Breakdown INCI Name)</th>
-                      <th class="text-left" style="width: 120px;">wt%</th>
+                      <th class="text-left" style="width: 220px;">Composition</th>
+                      <th class="text-left" style="width: 90px;">Breakdown INCI Name</th>
                       <th class="text-left" style="width: 170px;">CAS NO.</th>
                       <th class="text-left" style="width: 180px;">Function</th>
+                      <th class="text-left" style="width: 120px;">wt%</th>
                       <th class="text-center" style="width: 100px;">字體顏色</th>
                       <th class="text-center" style="width: 80px;">操作</th>
                     </tr>
@@ -301,16 +302,16 @@
                           density="compact"
                           variant="outlined"
                           hide-details
-                          placeholder="請輸入成分名稱（例如：Butylene Glycol）"
+                          placeholder="Composition"
                         ></v-text-field>
                       </td>
                       <td>
                         <v-text-field
-                          v-model="comp.wtPercent"
+                          v-model="comp.breakdownInciName"
                           density="compact"
                           variant="outlined"
                           hide-details
-                          placeholder="100%"
+                          placeholder="Breakdown INCI Name"
                         ></v-text-field>
                       </td>
                       <td>
@@ -329,6 +330,15 @@
                           variant="outlined"
                           hide-details
                           placeholder="功能"
+                        ></v-text-field>
+                      </td>
+                      <td>
+                        <v-text-field
+                          v-model="comp.wtPercent"
+                          density="compact"
+                          variant="outlined"
+                          hide-details
+                          placeholder="100%"
                         ></v-text-field>
                       </td>
                       <td class="text-center">
@@ -513,7 +523,7 @@ const editProcess = (item) => {
     unitPrice: item.unitPrice || '',
     casNumber: item.casNumber || '',
     ph: item.ph || '',
-    compositions: item.compositions ? JSON.parse(JSON.stringify(item.compositions)) : [],
+    compositions: item.compositions ? JSON.parse(JSON.stringify(item.compositions)).map(c => ({ breakdownInciName: '', composition: '', ...c })) : [],
     snkey: item.snkey,
     createInfo: item.createInfo || {},
     editInfo: item.editInfo || []
@@ -552,6 +562,7 @@ const addComposition = () => {
   const nextItemNumber = list.value.compositions.length + 1
   list.value.compositions.push({
     itemNumber: nextItemNumber.toString(),
+    breakdownInciName: '',
     composition: '',
     wtPercent: '',
     casNo: '',
@@ -775,11 +786,13 @@ defineExpose({
     font-size: 0.9rem;
     letter-spacing: 0.3px;
     border-bottom: 2px solid rgba(46, 125, 50, 0.2);
+    white-space: nowrap;
   }
   
   td {
     padding: 12px 16px;
     vertical-align: middle;
+    white-space: nowrap;
   }
   
   .composition-row {

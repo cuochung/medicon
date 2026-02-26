@@ -163,6 +163,7 @@
                     <th class="text-left">資料庫中的原料名稱</th>
                     <th class="text-left">Composition 數量</th>
                     <th class="text-left">Composition 預覽</th>
+                    <th class="text-left">Breakdown INCI Name 預覽</th>
                     <th class="text-center">展開</th>
                   </tr>
                 </thead>
@@ -194,7 +195,13 @@
                       </td>
                       <td class="text-left">
                         <div class="composition-preview">
-                          {{ result.compositions.slice(0, 2).map(c => c.composition).join(', ') }}
+                          {{ result.compositions.slice(0, 2).map(c => c.composition || '-').join(', ') }}
+                          <span v-if="result.compositions.length > 2">...</span>
+                        </div>
+                      </td>
+                      <td class="text-left">
+                        <div class="composition-preview">
+                          {{ result.compositions.slice(0, 2).map(c => c.breakdownInciName || '-').join(', ') }}
                           <span v-if="result.compositions.length > 2">...</span>
                         </div>
                       </td>
@@ -208,14 +215,15 @@
                       </td>
                     </tr>
                     <tr v-if="expandedRows.has(index)" class="expanded-row">
-                      <td colspan="7">
+                      <td colspan="8">
                         <div class="compositions-detail pa-4">
                           <div class="text-subtitle-2 mb-2">Composition 詳細資訊：</div>
                           <v-table density="compact" class="detail-table">
                             <thead>
                               <tr>
                                 <th class="text-left">項次</th>
-                                <th class="text-left">成分 (Breakdown INCI Name)</th>
+                                <th class="text-left">Breakdown INCI Name</th>
+                                <th class="text-left">Composition</th>
                                 <th class="text-left">wt%</th>
                                 <th class="text-left">CAS NO.</th>
                                 <th class="text-left">Function</th>
@@ -224,7 +232,8 @@
                             <tbody>
                               <tr v-for="(comp, compIndex) in result.compositions" :key="compIndex">
                                 <td class="text-left">{{ comp.itemNumber }}</td>
-                                <td class="text-left">{{ comp.composition }}</td>
+                                <td class="text-left">{{ comp.breakdownInciName || '-' }}</td>
+                                <td class="text-left">{{ comp.composition || '-' }}</td>
                                 <td class="text-left">{{ comp.wtPercent }}</td>
                                 <td class="text-left">{{ comp.casNo || '-' }}</td>
                                 <td class="text-left">{{ comp.ingredientFunction || '-' }}</td>
@@ -444,12 +453,12 @@ const parseExcelFile = (file) => {
           }
         })
         
-        // 檢查必要欄位：成分需有「Breakdown INCI Name」或「Composition」其一
+        // 檢查必要欄位：需有「項次」「原料料號」「wt%」；「Breakdown INCI Name」與「Composition」各別獨立讀取，至少需其一存在
         const hasBreakdownInci = cleanedHeaders.some(h => String(h || '').trim().includes('Breakdown INCI Name'))
         const hasComposition = cleanedHeaders.some(h => String(h || '').trim() === 'Composition')
         const hasIngredientColumn = hasBreakdownInci || hasComposition
         const missingFields = []
-        if (!hasIngredientColumn) missingFields.push('Breakdown INCI Name 或 Composition')
+        if (!hasIngredientColumn) missingFields.push('Breakdown INCI Name 或 Composition（至少需其一）')
         if (!cleanedHeaders.some(h => String(h || '').trim() === '項次')) missingFields.push('項次')
         if (!cleanedHeaders.some(h => String(h || '').trim() === '原料料號')) missingFields.push('原料料號')
         if (!cleanedHeaders.some(h => String(h || '').trim() === 'wt%')) missingFields.push('wt%')
@@ -472,11 +481,14 @@ const parseExcelFile = (file) => {
           const row = jsonData[i]
           
           // 跳過空行
-          if (row.every(cell => !cell || cell.toString().trim() === '')) {
+          if (row.every(cell => cell == null || cell === '' || String(cell).trim() === '')) {
             continue
           }
           
-          // 讀取欄位值（成分優先使用 Breakdown INCI Name，若無則用 Composition）
+          // 抓取到的內容一律視為文字：將儲存格轉成字串並 trim
+          const toText = (val) => (val == null || val === '') ? '' : String(val).trim()
+          
+          // 讀取欄位值：Breakdown INCI Name 與 Composition 各別獨立讀取，不合併
           const itemNumberIndex = headerIndexMap['itemNumber']
           const materialNumberIndex = headerIndexMap['materialNumber']
           const materialNameIndex = headerIndexMap['materialName']
@@ -487,16 +499,28 @@ const parseExcelFile = (file) => {
           const casNoIndex = headerIndexMap['casNo']
           const functionIndex = headerIndexMap['ingredientFunction']
           
-          const itemNumber = row[itemNumberIndex] ? String(row[itemNumberIndex]).trim() : ''
-          const materialNumber = row[materialNumberIndex] ? String(row[materialNumberIndex]).trim() : ''
-          const materialName = row[materialNameIndex] ? String(row[materialNameIndex]).trim() : ''
-          const category = row[categoryIndex] ? String(row[categoryIndex]).trim() : ''
-          const compositionFromBreakdown = (breakdownInciIndex !== undefined && row[breakdownInciIndex] != null) ? String(row[breakdownInciIndex]).trim() : ''
-          const compositionFromCol = (compositionIndex !== undefined && row[compositionIndex] != null) ? String(row[compositionIndex]).trim() : ''
-          const composition = compositionFromBreakdown || compositionFromCol
-          const casNo = (casNoIndex !== undefined && row[casNoIndex] != null) ? String(row[casNoIndex]).trim() : ''
-          const ingredientFunction = (functionIndex !== undefined && row[functionIndex] != null) ? String(row[functionIndex]).trim() : ''
-          let wtPercent = row[wtPercentIndex] ? String(row[wtPercentIndex]).trim() : ''
+          const itemNumber = toText(row[itemNumberIndex])
+          let materialNumber = toText(row[materialNumberIndex])
+          // 原料料號正規化：若為純數字（如 30004），補上前綴 SC 以對應資料庫 SC30004
+          if (materialNumber && /^\d{5}$/.test(materialNumber)) {
+            materialNumber = 'SC' + materialNumber
+          }
+          const materialName = toText(row[materialNameIndex])
+          const category = toText(row[categoryIndex])
+          const breakdownInciName = breakdownInciIndex !== undefined ? toText(row[breakdownInciIndex]) : ''
+          let composition = compositionIndex !== undefined ? toText(row[compositionIndex]) : ''
+          // Composition 若為 Excel 百分比數字（如 1→100%、0.625→62.5%），轉成百分比文字以正確顯示
+          if (composition && !isNaN(parseFloat(composition))) {
+            const n = parseFloat(composition)
+            if (n >= 0 && n <= 1) {
+              composition = (n * 100).toString() + '%'
+            } else if (n > 1 && n <= 100 && !composition.includes('%')) {
+              composition = n.toString() + '%'
+            }
+          }
+          const casNo = casNoIndex !== undefined ? toText(row[casNoIndex]) : ''
+          const ingredientFunction = functionIndex !== undefined ? toText(row[functionIndex]) : ''
+          let wtPercent = toText(row[wtPercentIndex])
           
           // 處理 wt% - Excel 百分比格式轉換
           if (wtPercent) {
@@ -519,9 +543,13 @@ const parseExcelFile = (file) => {
             }
           }
           
-          // 忽略沒有項次資料的行
-          if (!itemNumber) {
-            continue
+          // 沒有項次時：若該列有原料料號且有成分內容（Breakdown INCI Name 或 Composition），自動給項次 1，否則略過
+          let effectiveItemNumber = itemNumber
+          if (!effectiveItemNumber) {
+            if (!materialNumber || (!breakdownInciName && !composition)) {
+              continue
+            }
+            effectiveItemNumber = '1'
           }
           
           // 如果有原料料號，開始新的分組或更新當前分組
@@ -546,9 +574,10 @@ const parseExcelFile = (file) => {
             return
           }
           
-          // 建立 Composition 物件（含 CAS NO.、Function，顏色由表單後續選擇）
+          // 建立 Composition 物件（Breakdown INCI Name 與 Composition 各別儲存；顏色由表單後續選擇）
           const compositionData = {
-            itemNumber: itemNumber,
+            itemNumber: effectiveItemNumber,
+            breakdownInciName: breakdownInciName,
             composition: composition,
             wtPercent: wtPercent,
             casNo: casNo,

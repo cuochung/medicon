@@ -1,15 +1,29 @@
-/* databaseName、baseURL 統一放在 pinia 的 state 裡，在發送前由 interceptor 動態取得 */
+/*在js裡可以直接取用pinia
+之後的databaseName;axios.defaults.baseURL都統一放在pinia的state裡
+*/
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+createApp().use(createPinia())
 import { useStore } from '@/stores/useStore'
+const store = useStore();
+//在js裡可以直接取用pinia end
+
+// axios 設定
 import axios from 'axios'
 import qs from "qs";
 
+//axios基本設定 -> 及使用 instance取代axios 實例
 const instance = axios.create({
-  // baseURL 由 request interceptor 在發送前動態設定，避免依賴 Pinia 建立時機
+  baseURL: store.state.base_url, //統一使用 vuex 的 store 裡的base_url
+  // headers: { 'Content-Type': 'application/json' },
+  // timeout: 10000
 });
 
+
+//執行前及執行前動作導入;例:動畫 //這裡重新宣告一次store,不然改變動畫沒反應
 instance.interceptors.request.use(function (config) {
-  const store = useStore()
-  config.baseURL = store.state.base_url
+  // Do something before request is sent
+  const store = useStore()  
   store.state.loading = true;
   return config;
 }, function (error) {
@@ -104,8 +118,8 @@ instance.interceptors.response.use(function (response) {
 var api = {
   //get data
   async get(database) {
+    // console.log('run get', database)
     try {
-      const store = useStore()
       const get = await instance.post(`general/getAll/${store.state.databaseName}/${database}`)
       return get.data;
     }catch (err){
@@ -115,8 +129,8 @@ var api = {
 
   //add data
   async add(database, data) {
+    // console.log('run add')
     try {
-      const store = useStore()
       const get = await instance.post(`general/add/${store.state.databaseName}/${database}`, qs.stringify(data))
       return get.data;
     } catch (err) {
@@ -127,8 +141,8 @@ var api = {
 
   //post data (edit , update)
   async post(database, data) {
+    // console.log('run post')
     try {
-      const store = useStore()
       const get = await instance.post(`general/edit/${store.state.databaseName}/${database}`, qs.stringify(data))
       return get.data;
     } catch (err) {
@@ -139,8 +153,8 @@ var api = {
 
   //delete data
   async delete(database, data = null) {
+    console.log('run delete')
     try {
-      const store = useStore()
       const get = await instance.post(`general/delv3/${store.state.databaseName}/${database}`, qs.stringify(data))
       console.log('get', get)  
       return get.data;
@@ -164,8 +178,8 @@ var api = {
 
   //上傳檔案,單檔
   async upload(database, fd = null) {
+    console.log('run upload single')
     try {
-      const store = useStore()
       const get = await instance.post(`general/upload/${store.state.databaseName}/${database}`, fd)
       return get.data;
     } catch (err) {
@@ -176,8 +190,9 @@ var api = {
 
   //上傳檔案,多檔
   async uploadMulti(database, fd = null) {
+    console.log('run fileUploadMulti', `general/fileUploadMulti/${store.state.databaseName}/${database}`)
+
     try {
-      const store = useStore()
       const get = await instance.post(`general/fileUploadMulti/${store.state.databaseName}/${database}`, fd)
       return get.data;
     } catch (err) {
@@ -188,8 +203,8 @@ var api = {
 
   //新增多筆資料
   async addMulti(database, data) {
+    // console.log('run addMulti')
     try {
-      const store = useStore()
       const get = await instance.post(`general/addMulti/${store.state.databaseName}/${database}`, qs.stringify(data))
       return get.data;
     } catch (err) {
@@ -199,8 +214,8 @@ var api = {
   },
   //修改多筆資料
   async editMulti(database, data) {
+    // console.log('run editMulti')
     try {
-      const store = useStore()
       const get = await instance.post(`general/editMulti/${store.state.databaseName}/${database}`, qs.stringify(data))
       return get.data;
     } catch (err) {
@@ -209,8 +224,8 @@ var api = {
   },
   //刪除多筆資料
   async deleteMulti(database, data) {
+    // console.log('run deleteMulti')
     try {
-      const store = useStore()
       const get = await instance.post(`general/delMultiv3/${store.state.databaseName}/${database}`, qs.stringify(data))
       return get.data;
     } catch (err) {
@@ -219,16 +234,23 @@ var api = {
   },
 
   // Rust 伺服器新增多筆資料
+  // rustAddMulti: 發送資料到 Rust 伺服器
   async rustAddMulti(sheetName, data) {
+    console.log('run rustAddMulti', sheetName)
     try {
-      const store = useStore()
+      // 從 store 取得 Rust 伺服器的設定
+      const rustBaseURL = store.state.rustBaseURL
+
+      // 組裝 requestBody
       const requestBody = {
         apiToken: store.state.rustApiToken,
         databaseName: store.state.databaseName,
         sheetName: sheetName,
         data: data
       }
-      const url = `${store.state.rustBaseURL}/ingest`
+
+      // 建立完整的 URL
+      const url = `${rustBaseURL}/ingest`
 
       // 使用 axios 直接發送請求（不使用 instance，因為 baseURL 不同）
       const response = await axios.post(url, requestBody, {

@@ -9,7 +9,7 @@ export const useStore = defineStore('company', () => {
 
 
   const state = {
-    verMsg: "2026.2.12.1",
+    verMsg: "2026.2.26.1",
     databaseName: "medicon", //資料庫名
     base_url: `${setBaseUrl}/mediconapi`, //線上專用指定去讀圖片或其他東西的位置
 

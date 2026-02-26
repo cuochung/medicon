@@ -155,7 +155,7 @@
                       <v-tooltip location="top">
                         <template v-slot:activator="{ props }">
                           <span v-bind="props" style="cursor: help;">
-                            {{ item.raw.compositions.map(c => c.composition).join(', ') }}
+                            {{ item.raw.compositions.map(c => c.breakdownInciName || c.composition).join(', ') }}
                             <v-chip size="x-small" variant="outlined" class="ml-1">
                               {{ item.raw.compositions.length }}
                             </v-chip>
@@ -163,7 +163,7 @@
                         </template>
                         <div style="max-width: 480px;">
                           <div v-for="(comp, idx) in item.raw.compositions" :key="idx" class="mb-1" :style="comp.color ? { color: comp.color } : {}">
-                            <strong>{{ comp.itemNumber }}.</strong> {{ comp.composition }}
+                            <strong>{{ comp.itemNumber }}.</strong> {{ comp.breakdownInciName || comp.composition }}
                             <span v-if="comp.wtPercent"> ({{ formatWtPercent(comp.wtPercent) }})</span>
                             <span v-if="comp.casNo" class="text-caption ml-1">CAS: {{ comp.casNo }}</span>
                             <span v-if="comp.ingredientFunction" class="text-caption ml-1">｜{{ comp.ingredientFunction }}</span>
