@@ -1,3 +1,91 @@
+# 2026-03-09 工作記錄
+
+## 主要工作內容
+
+### 成分表功能（配方管理 → 輸出成分表）
+依計畫在配方管理中新增「成分表」功能，於新頁面顯示配方的 INCI 成分與計算後 wt%。
+
+1. **功能入口**
+   - 在 `Recipe/index.vue` 列表每列的齒輪選單中，於「修改」「刪除」旁新增「成分表」。
+   - 點擊時呼叫 `openCompositionSheet(item.raw)`，以 `router.push({ name: 'RecipeComposition', params: { snkey: item.snkey } })` 導向新頁。
+
+2. **路由與頁面**
+   - **路由**：在 `router/index.js` 的 `/main` 子路由新增 `RecipeComposition/:snkey`，`name: 'RecipeComposition'`，`component: CompositionSheet.vue`，`props: true`。
+   - **新組件**：`src/views/main/Recipe/CompositionSheet.vue`。
+
+3. **資料與計算邏輯**
+   - **取得配方**：`api.get('recipe')` 後依 route 的 `snkey` 篩出單筆，解析 `datalist` 取得 `items`（配方明細，含 `materialNumber`、`percentage`）。
+   - **取得原料成分**：`api.get('raw_material')`，每筆 `JSON.parse(datalist)` 後以 `materialNumber` 建 Map，保留 `compositions[]`（每筆含 `composition`、`breakdownInciName`、`wtPercent`、`casNo`、`ingredientFunction`）。
+   - **計算公式**：對每個配方明細項，以料號找到原料，對該原料每個成分計算  
+     **P_final = 配方明細百分比 × 原料成分 wt% / 100**；  
+     以 `(casNo|inciName)` 為 key 彙總同一成分的 P_final，`inciName = breakdownInciName || composition`。
+   - **wt% 解析**：沿用匯入邏輯（去 `%`、0～1 視為 Excel 百分比乘 100）。
+
+4. **成分表表格**
+   - 欄位：**No**、**Composition**、**Breakdown INCI Name**、**CAS No**、**Function**、**wt%**、**來源原料**。
+   - Composition、Breakdown INCI Name 依匯入資料各別顯示；無資料時顯示空白（不顯示 `-`）。
+   - wt% 以純文字顯示（不使用 chip）。
+   - 來源原料：列出每個貢獻來源的「料號（原料名）：配方% × 原料 wt%」。
+
+5. **版面**
+   - **上方區塊（上下排列）**  
+     - **配方資訊卡**：三欄排版，欄距加大。左欄 配方編號、產品名稱；中欄 版本、產品規格；右欄 生產批量、總生產量、原料數量。  
+     - **成分統計卡**：成分數量、總 wt%。
+   - 已移除搜尋欄與「總和 xx%」chip。
+
+6. **錯誤與提示**
+   - 找不到指定配方時顯示錯誤訊息。
+   - 缺料號或原料未建立成分組成時，於警告區列出，不納入計算。
+
+## 修改的檔案清單
+- `src/views/main/Recipe/index.vue`（齒輪選單新增「成分表」、`openCompositionSheet`、`useRouter`）
+- `src/router/index.js`（新增 `RecipeComposition/:snkey` 路由）
+- `src/views/main/Recipe/CompositionSheet.vue`（新增）
+
+---
+
+# 2026-02-24 工作記錄
+
+## 主要工作內容
+
+### 匯入成分組成（importCostComposition.vue）
+1. **Breakdown INCI Name 與 Composition 各別獨立匯入**
+   - 不再合併兩欄：Excel「Breakdown INCI Name」→ `breakdownInciName`，「Composition」→ `composition`，各自寫入每筆成分。
+   - 每筆成分結構：`itemNumber`、`breakdownInciName`、`composition`、`wtPercent`、`casNo`、`ingredientFunction`、`color`。
+
+2. **預覽表格**
+   - 在「Composition 預覽」右側新增「Breakdown INCI Name 預覽」欄；展開詳細表為兩欄：「Breakdown INCI Name」、「Composition」。
+   - Composition 預覽與 Breakdown INCI Name 預覽分別顯示對應欄位內容。
+
+3. **匯入邏輯調整**
+   - **原料料號正規化**：若為純數字 5 碼（如 30004），自動補前綴 `SC` 以對應資料庫（如 SC30004）。
+   - **項次為空**：若該列有原料料號且有成分內容（Breakdown INCI Name 或 Composition），自動給項次 `1`，不略過該列。
+   - **一律視為文字**：以 `toText(val)` 將所有儲存格讀成字串並 trim；空行判斷一併以文字處理。
+   - **Composition 百分比**：若 Excel 將 100% 存成數字 1，轉成文字 `"100%"` 再儲存與顯示（0～1 的數字轉成百分比字串）。
+
+### 原料新增/編輯（Add.vue）— 成分組成
+1. **欄位分離與順序**
+   - 表單改為兩欄：「Composition」（左，寬 220px）、「Breakdown INCI Name」（右，寬 90px）。
+   - 欄位順序：項次 → Composition → Breakdown INCI Name → CAS NO. → Function → **wt%**（已移到 Function 右邊）→ 字體顏色 → 操作。
+
+2. **版面與寬度**
+   - 成分組成表格：`th`、`td` 設 `white-space: nowrap`，內容不換行；外層可橫向捲動。
+   - 原料彈窗：`v-dialog` 改為 `max-width="96vw"`，略小於螢幕寬度。
+
+3. **資料結構**
+   - 新增一筆成分時預設物件加入 `breakdownInciName: ''`。
+   - 載入編輯時，舊資料若無 `breakdownInciName` 會補上空字串，避免 undefined。
+
+### 原料列表（index.vue）
+- 成分組成列表與 tooltip 顯示改為：`comp.breakdownInciName || comp.composition`，相容舊資料與新匯入兩欄。
+
+## 修改的檔案清單
+- `src/views/main/RawMaterial/importCostComposition.vue`
+- `src/views/main/RawMaterial/Add.vue`
+- `src/views/main/RawMaterial/index.vue`
+
+---
+
 # 2026-02-12 工作記錄
 
 ## 主要工作內容

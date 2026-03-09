@@ -131,6 +131,9 @@
                             <v-list-item @click="del(item.raw)">
                               <v-list-item-title>刪除</v-list-item-title>
                             </v-list-item>
+                            <v-list-item @click="openCompositionSheet(item.raw)">
+                              <v-list-item-title>成分表</v-list-item-title>
+                            </v-list-item>
                           </v-list>
                         </v-menu>
                       </td>
@@ -189,6 +192,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useStore } from '@/stores/useStore'
 import { getCurrentInstance } from 'vue'
 import popupadd from "./Add.vue"
@@ -198,6 +202,7 @@ import dayjs from "dayjs"
 import api from '@/assets/js/api.js'
 
 const { proxy } = getCurrentInstance()
+const router = useRouter()
 const store = useStore()
 const childFn = ref(null)
 
@@ -291,6 +296,18 @@ const getTotalPercentageColor = (recipe) => {
   if (Math.abs(total - 100) < 0.01) return 'success'
   if (total > 100) return 'error'
   return 'warning'
+}
+
+const openCompositionSheet = (item) => {
+  if (!item || !item.snkey) {
+    return
+  }
+  router.push({
+    name: 'RecipeComposition',
+    params: {
+      snkey: item.snkey,
+    },
+  })
 }
 
 const del = async (item) => {

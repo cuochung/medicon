@@ -24,6 +24,7 @@ const routes = [
       { path: 'Order', name: 'Order', component: () => import('@/views/main/Order/index.vue') },
       { path: 'RawMaterial', name: 'RawMaterial', component: () => import('@/views/main/RawMaterial/index.vue') },
       { path: 'Recipe', name: 'Recipe', component: () => import('@/views/main/Recipe/index.vue') },
+      { path: 'RecipeComposition/:snkey', name: 'RecipeComposition', component: () => import('@/views/main/Recipe/CompositionSheet.vue'), props: true },
       { path: 'Wallet', name: 'Wallet', component: () => import('@/views/main/Wallet/index.vue') },
       { path: 'Wallet/Recharge', name: 'WalletRecharge', component: () => import('@/views/main/Wallet/Recharge.vue') },
       { path: 'Wallet/Deduction', name: 'WalletDeduction', component: () => import('@/views/main/Wallet/Deduction.vue') },
