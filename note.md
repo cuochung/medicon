@@ -1,3 +1,27 @@
+# 2026-03-10 工作記錄
+
+## 主要工作內容
+
+### 業務專用交易記錄查詢（SalesTransactionHistory.vue）
+1. **表格欄位**
+   - 在「交易日期」右側新增一欄「訂購日期」。
+   - 表頭：`<th>訂購日期</th>`；表格內容：`transaction.raw.orderDate` 以 `formatDateDisplay` 顯示，無值顯示 `-`。
+
+2. **查詢條件（開始日期／結束日期）**
+   - 按下「查詢記錄」時，日期區間改為依 **訂購日期（orderDate）** 篩選。
+   - 開始日期：僅保留 `orderDate` 有效且 `>= 開始日期` 的資料。
+   - 結束日期：僅保留 `orderDate` 有效且 `<= 結束日期` 的資料。
+
+### 一般交易記錄查詢（TransactionHistory.vue）
+- **查詢條件（開始日期／結束日期）**
+  - 按下「查詢記錄」時，日期區間改為依 **訂購日期（orderDate）** 篩選，邏輯同上（orderDate 有效且在區間內）。
+
+## 修改的檔案清單
+- `src/views/main/Wallet/SalesTransactionHistory.vue`（新增訂購日期欄、日期篩選改為 orderDate）
+- `src/views/main/Wallet/TransactionHistory.vue`（日期篩選改為 orderDate）
+
+---
+
 # 2026-03-09 工作記錄
 
 ## 主要工作內容

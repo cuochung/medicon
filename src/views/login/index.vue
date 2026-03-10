@@ -133,10 +133,23 @@ const loginForm = ref({
 // 表單驗證規則
 const emptyRules = [(v) => !!v || '不可空白']
 
+// 依權限決定登入後導向（業務權限直接進入業務專用交易記錄查詢）
+const getPostLoginPath = (pData) => {
+  if (pData && pData.sales_key === 'true') {
+    return '/main/Wallet/SalesTransactionHistory'
+  }
+  return '/main/functionlist'
+}
+
 // 檢查是否已登入
 const loginedCheck = () => {
   if (sessionStorage.getItem('logined') === 'logined') {
-    router.push('/main/functionlist')
+    let pData = null
+    try {
+      const raw = sessionStorage.getItem('pData')
+      if (raw) pData = JSON.parse(raw)
+    } catch (_) {}
+    router.push(getPostLoginPath(pData))
   }
 }
 
@@ -189,7 +202,7 @@ const checkLogin = async () => {
         store.pData = pData
         sessionStorage.setItem('pData', JSON.stringify(pData))
         sessionStorage.setItem('logined', 'logined')
-        router.push('/main/functionlist')
+        router.push(getPostLoginPath(pData))
         proxy.$swal({
           icon: 'success',
           title: '登入成功'

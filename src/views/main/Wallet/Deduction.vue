@@ -863,6 +863,7 @@ const submitDeduction = async () => {
               balanceAfter: balanceAfter,
               orderNumber: null,
               documentNumber: order.documentNumber,
+              orderDate: order.orderDate,
               transactionDate: now,
               createInfo: {
                 snkey: store.state.pData.snkey,

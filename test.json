@@ -1,74 +1,22 @@
 {
-    "customer_key": "true",
-    "customer_add_key": "true",
-    "customer_edit_key": "true",
-    "customer_del_key": "true",
-    "customer_search_key": "true",
-    "order_key": "true",
-    "order_add_key": "true",
-    "order_edit_key": "true",
-    "order_del_key": "true",
-    "order_search_key": "true",
-    "personnel_key": "true",
-    "personnel_add_key": "true",
-    "personnel_edit_key": "true",
-    "personnel_del_key": "true",
-    "personnel_search_key": "true",
+    "customerFullName": "陳金德",
+    "salesPerson": "MD038",
+    "deliveryAddress": "新北市林口區麗園二街36巷19號",
+    "contactPhone1": "02-26001188",
+    "customerNumber": "10001",
+    "addressNumber": "001",
+    "address": "新北市林口區麗園二街36巷19號",
+    "postalCode": "24449",
+    "contactPerson": "陳金德",
+    "contactPhone": "0932-299-299",
+    "contactTitle": "",
+    "faxNumber": "",
+    "route": "",
+    "notes": "",
     "createInfo": {
-        "snkey": "31",
-        "name": "\u7cfb\u7d71\u7ba1\u7406\u54e1",
-        "time": "2025-11-17 19:38:50"
+        "snkey": "35",
+        "name": "test",
+        "time": "2025-12-22 17:45:11"
     },
-    "editInfo": [
-        {
-            "snkey": "34",
-            "name": "\u7cfb\u7d71\u7ba1\u7406\u54e1",
-            "time": "2026-01-22 18:20:00"
-        },
-        {
-            "snkey": "34",
-            "name": "\u7cfb\u7d71\u7ba1\u7406\u54e1",
-            "time": "2026-01-20 20:30:28"
-        },
-        {
-            "snkey": "34",
-            "name": "\u7cfb\u7d71\u7ba1\u7406\u54e1",
-            "time": "2026-01-20 18:03:04"
-        },
-        {
-            "snkey": "34",
-            "name": "\u7cfb\u7d71\u7ba1\u7406\u54e1",
-            "time": "2025-11-18 20:43:39"
-        }
-    ],
-    "account": "master",
-    "password": "testpass",
-    "username": "\u7cfb\u7d71\u7ba1\u7406\u54e1",
-    "snkey": "34",
-    "last_login_time": "2026-01-22 18:27:56",
-    "wallet_key": "true",
-    "wallet_add_key": "true",
-    "wallet_edit_key": "true",
-    "wallet_del_key": "true",
-    "wallet_search_key": "true",
-    "supplier_key": "true",
-    "supplier_add_key": "true",
-    "supplier_edit_key": "true",
-    "supplier_del_key": "true",
-    "supplier_search_key": "true",
-    "ingredient_key": "true",
-    "ingredient_add_key": "true",
-    "ingredient_edit_key": "true",
-    "ingredient_del_key": "true",
-    "ingredient_search_key": "true",
-    "RawMaterial_key": "true",
-    "RawMaterial_add_key": "true",
-    "RawMaterial_edit_key": "true",
-    "RawMaterial_del_key": "true",
-    "RawMaterial_search_key": "true",
-    "Recipe_key": "true",
-    "Recipe_add_key": "true",
-    "Recipe_edit_key": "true",
-    "Recipe_del_key": "true",
-    "Recipe_search_key": "true"
+    "editInfo": []
 }

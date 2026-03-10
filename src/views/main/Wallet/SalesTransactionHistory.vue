@@ -5,15 +5,15 @@
         <v-col cols="12">
           <v-sheet class="page-hero" elevation="0" rounded="xl">
             <div class="d-flex align-center mb-4">
-              <v-btn icon variant="text" @click="$router.push('/main/Wallet')" class="mr-3">
+              <v-btn icon variant="text" @click="$router.push('/main/functionlist')" class="mr-3">
                 <v-icon>mdi-arrow-left</v-icon>
               </v-btn>
               <v-avatar color="success" variant="tonal" size="48" class="mr-3">
                 <v-icon color="success">mdi-history</v-icon>
               </v-avatar>
               <div>
-                <h2 class="hero-title mb-1">交易記錄查詢</h2>
-                <p class="hero-subtitle mb-0">查詢儲值與扣款記錄</p>
+                <h2 class="hero-title mb-1">業務專用交易記錄查詢</h2>
+                <p class="hero-subtitle mb-0">查詢指定業務客戶之儲值與扣款記錄</p>
               </div>
             </div>
           </v-sheet>
@@ -47,7 +47,6 @@
                             <v-icon>mdi-account</v-icon>
                           </v-avatar>
                         </template>
-                        <!-- <v-list-item-title>{{ item.raw.customerFullName }}</v-list-item-title> -->
                         <v-list-item-subtitle>{{ item.raw.customerNumber }}</v-list-item-subtitle>
                       </v-list-item>
                     </template>
@@ -58,7 +57,7 @@
                     </template>
                   </v-autocomplete>
                 </v-col>
-                <v-col cols="12" md="3">
+                <!-- <v-col cols="12" md="3">
                   <v-select
                     v-model="filterTransactionType"
                     :items="transactionTypeOptions"
@@ -68,7 +67,7 @@
                     prepend-inner-icon="mdi-swap-horizontal"
                     clearable
                   ></v-select>
-                </v-col>
+                </v-col> -->
                 <v-col cols="12" md="3">
                   <v-menu
                     v-model="startDateMenu"
@@ -284,8 +283,8 @@
       </v-row>
     </v-container>
 
-    <!-- 浮動快速選單 - 使用 v-fab -->
-    <Link />
+    <!-- 浮動快速選單 -->
+    <!-- <Link /> -->
 
     <!-- 交易記錄輸出組件 -->
     <PrintTransactionHistory
@@ -318,6 +317,14 @@ dayjs.locale('zh-tw')
 
 const { proxy } = getCurrentInstance()
 const store = useStore()
+
+// 登入者員工編號（僅顯示指定業務的客戶）
+const currentEmployeeNumber = computed(() => {
+  const p = store.state.pData
+  const empNo = (!p || p.employee_number == null) ? '' : String(p.employee_number).trim()
+  console.log('【業務交易記錄】計算登入員工編號', { pData: p, empNo })
+  return empNo
+})
 
 // 響應式數據
 const loading = ref(false)
@@ -352,13 +359,15 @@ const transactionTypeOptions = [
   { title: '扣款', value: 'deduction' }
 ]
 
-// 客戶選項
+// 客戶選項（僅含指定業務的客戶，由 customers 篩選後提供）
 const customerOptions = computed(() => {
-  return customers.value.map(c => ({
+  const opts = customers.value.map(c => ({
     snkey: c.snkey,
     customerNumber: c.customerNumber,
     customerFullName: c.customerFullName
   }))
+  console.log('【業務交易記錄】計算客戶下拉選項', opts)
+  return opts
 })
 
 // 客戶搜索過濾器（同時搜索客戶名稱和編號）
@@ -417,21 +426,35 @@ const formatDateDisplay = (dateValue) => {
 // 取得客戶名稱
 const getCustomerName = (customerNumber) => {
   const customer = customers.value.find(c => c.customerNumber === customerNumber)
-  return customer ? customer.customerFullName : null
+  const name = customer ? customer.customerFullName : null
+  console.log('【業務交易記錄】取得客戶名稱', { customerNumber, name, customers: customers.value })
+  return name
 }
 
-// 載入客戶列表
+// 載入客戶列表（僅保留 salesPerson === 登入者員工編號 的客戶）
 const loadCustomers = async () => {
   try {
+    console.log('【業務交易記錄】開始載入客戶資料')
     const rs = await api.get('customer')
+    console.log('【業務交易記錄】customer API 回傳結果', rs)
     if (rs && rs.length > 0) {
-      customers.value = rs.map((i) => ({
+      const all = rs.map((i) => ({
         ...JSON.parse(i.datalist),
         snkey: i.snkey,
       }))
+      const empNo = currentEmployeeNumber.value
+      const filtered = empNo
+        ? all.filter(c => String((c.salesPerson || '')).trim() === empNo)
+        : []
+      console.log('【業務交易記錄】依員工編號過濾客戶', { empNo, total: all.length, matched: filtered.length, filtered })
+      customers.value = filtered
+    } else {
+      console.log('【業務交易記錄】customer API 無資料，customers 設為空陣列')
+      customers.value = []
     }
   } catch (error) {
-    console.error('載入客戶列表失敗:', error)
+    console.error('【業務交易記錄】載入客戶列表失敗', error)
+    customers.value = []
   }
 }
 
@@ -444,7 +467,7 @@ const loadTransactions = async () => {
         ...JSON.parse(i.datalist),
         snkey: i.snkey,
       }))
-      
+
       // 按交易日期倒序排列
       transactions.value.sort((a, b) => {
         const dateA = dayjs(a.transactionDate)
@@ -473,6 +496,10 @@ const searchTransactions = async () => {
 
     let filtered = [...transactions.value]
 
+    // 僅顯示屬於當前業務客戶的交易（依客戶編號在 customers 內）
+    const customerNumbers = new Set(customers.value.map(c => c.customerNumber))
+    filtered = filtered.filter(t => customerNumbers.has(t.customerNumber))
+
     // 客戶篩選
     if (filterCustomer.value) {
       const selectedCustomer = customers.value.find(c => c.snkey === filterCustomer.value)
@@ -486,7 +513,7 @@ const searchTransactions = async () => {
       filtered = filtered.filter(t => t.transactionType === filterTransactionType.value)
     }
 
-    // 日期篩選（依訂購日期 orderDate）
+    // 日期篩選
     if (filterStartDate.value) {
       const startDate = dayjs(filterStartDate.value)
       filtered = filtered.filter(t => {
@@ -557,8 +584,6 @@ const exportTransactions = () => {
   if (filteredTransactions.value.length === 0) {
     return
   }
-
-  // 調用組件的輸出方法
   if (printTransactionHistoryRef.value) {
     printTransactionHistoryRef.value.exportTransactions()
   }

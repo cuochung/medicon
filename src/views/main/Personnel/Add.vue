@@ -67,6 +67,20 @@
               </v-row>
             </v-sheet>
 
+            <v-sheet class="info-section mt-4" color="success-lighten-5" variant="tonal" rounded="lg">
+              <div class="info-section__header mb-2">
+                <v-icon color="success" size="24">mdi-account-tie</v-icon>
+                <span class="text-subtitle-1 font-weight-bold text-success ml-2">業務權限</span>
+              </div>
+              <v-checkbox
+                hide-details
+                label="業務專用（可進入業務專用交易記錄查詢）"
+                v-model="list.sales_key"
+                value="true"
+                density="comfortable"
+              ></v-checkbox>
+            </v-sheet>
+
             <v-alert border="start" border-color="primary" elevation="2" variant="tonal" class="auth-section">
               <div class="d-flex pa-2 align-center">
                 <header class="text-primary font-weight-bold">權限設定</header>
@@ -163,7 +177,7 @@ const emptyRules = [(v) => !!v || "不可空白"]
 
 // Computed
 const filterAuthKeys = computed(() => {
-  return props.authKeys.filter((i) => i.authKey != "pass")
+  return props.authKeys.filter((i) => i.authKey != "pass" && i.keyName !== 'sales')
 })
 
 const keyItems = computed(() => {
@@ -190,11 +204,12 @@ const addProcess = () => {
   processType.value = "add"
   title.value = "新增人員資料"
   titleStyle.value = "dialog-title dialog-title--add"
-  list.value = { 
+  list.value = {
     ...keyItems.value,
+    sales_key: '',
     createInfo: {},
     editInfo: []
-   }
+  }
   nextTick(() => {
     form.value.resetValidation()
   })

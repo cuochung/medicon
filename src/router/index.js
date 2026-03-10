@@ -30,6 +30,7 @@ const routes = [
       { path: 'Wallet/Deduction', name: 'WalletDeduction', component: () => import('@/views/main/Wallet/Deduction.vue') },
       { path: 'Wallet/OrderQuery', name: 'WalletOrderQuery', component: () => import('@/views/main/Wallet/OrderQuery.vue') },
       { path: 'Wallet/TransactionHistory', name: 'WalletTransactionHistory', component: () => import('@/views/main/Wallet/TransactionHistory.vue') },
+      { path: 'Wallet/SalesTransactionHistory', name: 'WalletSalesTransactionHistory', component: () => import('@/views/main/Wallet/SalesTransactionHistory.vue') },
       { path: 'Wallet/BalanceQuery', name: 'WalletBalanceQuery', component: () => import('@/views/main/Wallet/BalanceQuery.vue') },
     ]
   },

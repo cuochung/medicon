@@ -156,7 +156,8 @@
                   <v-table v-if="recentTransactions.length > 0" class="text-no-wrap">
                     <thead>
                       <tr>
-                        <th class="text-left">交易日期</th>
+                        <th class="text-left">建構日期</th>
+                        <th class="text-left">訂購日期</th>
                         <th class="text-left">交易類型</th>
                         <th class="text-left">交易金額(含稅額)</th>
                         <th class="text-left">交易後餘額</th>
@@ -166,6 +167,7 @@
                     <tbody>
                       <tr v-for="(transaction, index) in recentTransactions" :key="index">
                         <td>{{ formatDateTime(transaction.transactionDate) }}</td>
+                        <td>{{ transaction.orderDate ? dayjs(transaction.orderDate).format('YYYY-MM-DD') : '-' }}</td>
                         <td>
                           <v-chip
                             :color="transaction.transactionType === 'recharge' ? 'success' : 'error'"

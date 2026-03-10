@@ -96,6 +96,7 @@
                       <th class="text-left"></th>
                       <th class="text-left">單據號碼</th>
                       <th class="text-left">客戶全稱</th>
+                      <th class="text-left">業務人員</th>
                       <th class="text-left">品名規格</th>
                       <th class="text-left">單價</th>
                       <th class="text-left">數量</th>
@@ -128,6 +129,7 @@
                       </td>
                       <td>{{ item.raw.documentNumber || '-' }}</td>
                       <td>{{ item.raw.customerFullName || '-' }}</td>
+                      <td>{{ customerSalesMap[item.raw.customerNumber] || '-' }}</td>
                       <td>{{ item.raw.productName || '-' }}</td>
                       <td>{{ item.raw.unitPrice || '-' }}</td>
                       <td>{{ item.raw.quantity || '-' }}</td>
@@ -189,6 +191,7 @@ const childFn = ref(null)
 
 // 響應式數據
 const items = ref([])
+const customerSalesMap = ref({}) // customerNumber -> salesPerson（由客戶資料帶入）
 const usingDatabase = ref("orderdata")
 const searchKey = ref("")
 const auth = ref("")
@@ -252,6 +255,23 @@ const searchfilter = computed(() => {
 })
 
 // 方法
+const loadCustomerSalesMap = async () => {
+  const rs = await api.get('customer')
+  const map = {}
+  if (rs && rs.length > 0) {
+    rs.forEach((i) => {
+      try {
+        const d = JSON.parse(i.datalist || '{}')
+        const num = d.customerNumber ? String(d.customerNumber).trim() : ''
+        if (num) map[num] = d.salesPerson || ''
+      } catch (e) {
+        console.warn('解析客戶資料時發生錯誤:', e)
+      }
+    })
+  }
+  customerSalesMap.value = map
+}
+
 const getAllData = async () => {
   await api.get(usingDatabase.value).then((rs) => {
     if (rs.length > 0) {
@@ -280,7 +300,7 @@ const getAllData = async () => {
       })
     }
   })
-
+  await loadCustomerSalesMap()
 }
 
 const edit = (item) => {

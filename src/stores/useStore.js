@@ -3,8 +3,8 @@ import { defineStore } from 'pinia'
 
 export const useStore = defineStore('company', () => {
 
-  // let setBaseUrl = 'http://localhost'; //地區測試
-  const setBaseUrl = 'https://www.pddtvgame.com'; //線上主機
+  let setBaseUrl = 'http://localhost'; //地區測試
+  // const setBaseUrl = 'https://www.pddtvgame.com'; //線上主機
   // const setBaseUrl = 'https://www.pddtech.online'; //線上二號機
 
 
@@ -79,8 +79,13 @@ export const useStore = defineStore('company', () => {
         authKey: "personnel_key",
         icon: 'mdi-account',
       },
-      
-
+      {
+        label: "業務專用交易記錄查詢", class: "ma-1 white--text", color: "success", keyName: 'sales',
+        image: new URL('@/assets/img/saifu_gamaguchi.png', import.meta.url).href,
+        route: "/main/Wallet/SalesTransactionHistory",
+        authKey: "sales_key",
+        icon: 'mdi-history',
+      },
       {
         label: "登出", class: "ma-1 white--text", color: "dark", keyName: 'exit',
         image: new URL('@/assets/img/text_exit.png', import.meta.url).href,
