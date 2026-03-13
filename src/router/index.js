@@ -34,6 +34,7 @@ const routes = [
       { path: 'Wallet/BalanceQuery', name: 'WalletBalanceQuery', component: () => import('@/views/main/Wallet/BalanceQuery.vue') },
       { path: 'WalletV2', name: 'WalletV2', component: () => import('@/views/main/WalletV2/index.vue') },
       { path: 'WalletV2/BalanceList', name: 'WalletV2BalanceList', component: () => import('@/views/main/WalletV2/BalanceList.vue') },
+      { path: 'WalletV2/TransactionHistory', name: 'WalletV2TransactionHistory', component: () => import('@/views/main/WalletV2/TransactionHistory.vue') },
     ]
   },
 

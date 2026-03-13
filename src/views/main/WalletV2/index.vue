@@ -85,6 +85,14 @@ const functionItems = ref([
     route: '/main/WalletV2/BalanceList',
     buttonText: '前往一覽表'
   },
+  {
+    title: '交易記錄查詢',
+    subtitle: '依客戶與日期區間查詢訂單並試算儲值餘額',
+    icon: 'mdi-history',
+    color: 'success',
+    route: '/main/WalletV2/TransactionHistory',
+    buttonText: '查詢交易記錄'
+  },
 ])
 
 // 統計數據（來自 walletdatav2）

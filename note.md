@@ -1,3 +1,67 @@
+# 2026-03-13 工作記錄
+
+## 主要工作內容
+
+### 會員儲值版本二：會員儲金一覽表（WalletV2/BalanceList）
+1. **基準日設定（walletActivationDate）**
+   - `BalanceList.vue` 透過 `api.get('other_data')` 讀取第一筆資料，優先取資料表欄位 `walletActivationDate`，若沒有則從 `datalist.walletActivationDate` 解析後顯示為目前基準日。
+   - 使用者可在畫面上以 `type="date"` 的輸入欄選擇新日期，按「儲存」後會：
+     - 再次呼叫 `api.get('other_data')` 取得第一筆資料。
+     - 以 `api.post('other_data', { snkey, walletActivationDate })` 方式更新該筆，沿用專案共用 `other_data` 來存放儲值相關全域設定。
+   - 儲存成功與失敗訊息皆依照 SweetAlert 規範顯示（成功：`icon: 'success'`，失敗：`icon: 'error'`，無資料時提醒無法儲存）。
+
+2. **會員儲金一覽表**
+   - 以 `api.get('walletdatav2')` 取得所有儲值資料，對每筆做 `JSON.parse(datalist)` 後組成 `{ snkey, customerName, balance }` 寫入 `list`。
+   - 上方工具列提供「搜尋客戶關鍵字」欄位，可輸入多個關鍵字（以空白分隔），會對整筆物件做 `JSON.stringify` 後轉大寫比對，所有關鍵字都符合才會留下。
+   - 表格使用 `PaginatedIterator` 分頁，欄位僅保留：
+     - 客戶名稱：`rowData(item).customerName`。
+     - 儲金剩餘金額：以 `formatBalance` 將 `balance` 轉為千分位整數字串，無法解析為數字時顯示 `—`。
+   - 當 `list` 為空或搜尋無結果時，分別顯示「尚無資料，請使用匯入」與「查無符合關鍵字」的提示。
+
+3. **Excel 匯入與其他行為**
+   - 右側嵌入 `ImportExcelDialog`，完成匯入後觸發 `@imported="loadWalletData"` 重新讀取 `walletdatav2`，確保列表與基準日試算資料一致。
+   - 標題區與整體樣式延續 Wallet 系列的卡片設計（漸層背景、圓角卡片、陰影），與 WalletV2 首頁整體視覺保持一致。
+
+### 會員儲值版本二：交易記錄查詢與餘額試算（WalletV2）
+1. **後端 API（walletV2TransactionQuery）**
+   - 在 `mediconapi` 的 `General` 控制器新增 `walletV2TransactionQuery($databaseName)`。
+   - 依參數 `customerName`、`startDate`、`endDate`、`orderNo` 從 `orderdata` 撈資料，僅保留 `datalist.customerFullName === customerName`，並套用日期區間與訂單編號模糊查詢。
+   - 從 `other_data` 第一筆資料的 `walletActivationDate` 取得基準日，從 `walletdatav2` 依 `datalist.customerName` 找出該客戶的目前儲值餘額 `balance`。
+   - 對符合條件的訂單，以 `amount + taxAmount` 算出含稅金額；若 `orderDate >= walletActivationDate` 則累加為「本次查詢扣款金額（usedAmount）」。
+   - 回傳結構：
+     - `walletInfo`: `{ baseDate, baseAmount, usedAmount, remainAmount }`，其中 `remainAmount = baseAmount - usedAmount`。
+     - `orders`: 每筆包含 `snkey`、`documentNumber`、`orderDate`、`customerNumber`、`customerFullName`、`productName`、`amount`、`taxAmount`、`amountWithTax`、`createInfo` 等欄位。
+
+2. **前端查詢頁（WalletV2/TransactionHistory.vue）**
+   - 在 `router/index.js` 新增路由 `WalletV2/TransactionHistory`，並在 `WalletV2/index.vue` 增加「交易記錄查詢」功能卡片。
+   - 查詢條件：
+     - 客戶名稱：從 `walletdatav2` 讀取 `datalist.customerName` 組成下拉選單。
+     - 開始／結束日期：使用日期選擇器，送出前檢查「開始日期不可晚於結束日期」。
+     - 訂單編號：文字欄位，後端以 `documentNumber` 模糊搜尋。
+   - 點擊「查詢記錄」：
+     - 使用 `api.options('general/walletV2TransactionQuery/{databaseName}', payload)` 呼叫新 API。
+     - 顯示頂部四張卡片：基準日、目前儲值餘額、基準日後扣款總額、本次查詢後預估餘額。
+     - 下方表格列出每筆訂單：訂購日期、訂單編號、客戶名稱、產品名稱、金額(含稅)；修正 `PaginatedIterator` 的資料結構，改以 `rowData(item)` 取得實際欄位，避免出現全為 0 或空白的情況。
+
+3. **匯出交易記錄報表（PrintOrderHistory.vue）**
+   - 新增 `WalletV2` 專用匯出元件 `PrintOrderHistory.vue`，從 `orders`、`walletInfo` 與查詢條件組出一份 HTML 報表。
+   - 報表內容：
+     - 標題「會員儲值 V2 交易記錄」，副標顯示查詢日期區間與客戶名稱。
+     - 基準日、目前儲值餘額、本次查詢扣款金額、預估剩餘餘額等資訊。
+     - 明細表：序號、訂購日期、訂單編號、客戶名稱、產品名稱、金額(含稅)；**已移除「操作人員」欄位與內容**。
+   - `TransactionHistory.vue` 中在表格標題列右側加入「輸出交易記錄」按鈕，按下時呼叫 `printOrderHistoryRef.exportTransactions()`：
+     - 只會在新分頁開啟報表 HTML，不再自動觸發 `window.print()`，由使用者自行決定是否列印。
+
+## 修改的檔案清單
+- `Sites/mediconapi/app/Controllers/General.php`（新增 `walletV2TransactionQuery` API）
+- `src/router/index.js`（新增 `WalletV2/TransactionHistory` 路由）
+- `src/views/main/WalletV2/index.vue`（新增「交易記錄查詢」功能卡片）
+- `src/views/main/WalletV2/BalanceList.vue`（基準日讀寫、儲金一覽與搜尋／分頁、匯入後重載資料）
+- `src/views/main/WalletV2/TransactionHistory.vue`（新增交易查詢頁、修正表格資料綁定、串接新 API、加入輸出按鈕）
+- `src/views/main/WalletV2/PrintOrderHistory.vue`（新增：會員儲值 V2 交易記錄匯出報表）
+
+---
+
 # 2026-03-10 工作記錄
 
 ## 主要工作內容
